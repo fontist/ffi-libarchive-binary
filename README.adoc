@@ -1,0 +1,103 @@
+= Binaries for ffi-libarchive
+
+== Purpose
+
+Contains pre-compiled and install-time-compiled binaries for ffi-libarchive.
+
+
+== Installation
+
+Add this line to your application's Gemfile:
+
+[source,ruby]
+----
+gem "ffi-libarchive-binary"
+----
+
+And then execute:
+
+[source,sh]
+----
+$ bundle install
+----
+
+Or install it yourself as:
+
+[source,sh]
+----
+$ gem install ffi-libarchive-binary
+----
+
+
+== Usage
+
+Require the gem and use calls from https://github.com/chef/ffi-libarchive[ffi-libarchive].
+
+[source,ruby]
+----
+require "ffi-libarchive-binary"
+
+path = File.expand_path('file.pkg', __dir__)
+flags = Archive::EXTRACT_PERM
+reader = Archive::Reader.open_filename(path)
+
+reader.each_entry do |entry|
+  reader.extract(entry, flags.to_i)
+end
+
+reader.close
+----
+
+
+== Development
+
+We are following Sandi Metz's Rules for this gem, you can read the
+http://robots.thoughtbot.com/post/50655960596/sandi-metz-rules-for-developers[description of the rules here].
+All new code should follow these
+rules. If you make changes in a pre-existing file that violates these rules you
+should fix the violations as part of your contribution.
+
+
+== Releasing
+
+Releasing is done automatically with GitHub Action. Just bump and tag with `gem-release`.
+
+For a patch release (0.0.x) use:
+
+[source,ruby]
+----
+gem bump --version patch --tag --push
+----
+
+For a minor release (0.x.0) use:
+
+[source,ruby]
+----
+gem bump --version minor --tag --push
+----
+
+
+== Contributing
+
+First, thank you for contributing! We love pull requests from everyone. By
+participating in this project, you hereby grant https://www.ribose.com[Ribose Inc.] the
+right to grant or transfer an unlimited number of non exclusive licenses or
+sub-licenses to third parties, under the copyright covering the contribution
+to use the contribution by all means.
+
+Here are a few technical guidelines to follow:
+
+1. Open an https://github.com/fontist/ffi-libarchive-binary/issues[issue] to discuss a new feature.
+1. Write tests to support your new feature.
+1. Make sure the entire test suite passes locally and on CI.
+1. Open a Pull Request.
+1. https://github.com/thoughtbot/guides/tree/master/protocol/git#write-a-feature[Squash your commits]
+  after receiving feedback.
+1. Party!
+
+
+== License
+
+This gem is distributed with a BSD 3-Clause license.
+
+This gem is developed, maintained and funded by https://www.ribose.com/[Ribose Inc.]
