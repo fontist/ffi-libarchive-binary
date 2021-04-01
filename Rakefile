@@ -52,6 +52,12 @@ task :compile, [:host] do |_t, args|
   recipe.cook_if_not
 end
 
+desc "Recompile binary"
+task :recompile do
+  recipe = LibarchiveBinary::LibarchiveRecipe.new
+  recipe.cook
+end
+
 CLOBBER.include("pkg")
 CLEAN.include("ports",
               "tmp",

@@ -9,7 +9,7 @@ RSpec.describe do
     Dir.mktmpdir do |target|
       unarchive(archive, target)
 
-      expect(Pathname.new(File.join(target, "Folder", "file.txt"))).to exist
+      expect(Pathname.new(File.join(target, "Payload"))).to exist
     end
   end
 
