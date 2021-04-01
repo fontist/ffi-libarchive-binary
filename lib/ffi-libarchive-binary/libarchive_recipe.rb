@@ -19,18 +19,35 @@ module LibarchiveBinary
     def configure_defaults
       [
         "--host=#{@host}",
-        "--disable-static",
-        "--enable-shared",
+        "--disable-bsdtar",
+        "--disable-bsdcat",
+        "--disable-bsdcpio",
+        "--without-bz2lib",
+        "--without-libb2",
+        "--without-iconv",
+        "--without-lz4",
+        "--without-zstd",
+        "--without-lzma",
+        "--without-cng",
+        "--without-xml2",
+        "--with-expat",
+        "--with-openssl",
+        "--disable-acl",
       ]
     end
 
     def cook_if_not
-      checkpoint_file = "#{self.name}-#{self.version}-#{self.host}.installed"
-      checkpoint = File.join(@target, checkpoint_file)
-      return if File.exist?(checkpoint)
+      cook unless File.exist?(checkpoint)
+    end
 
-      cook
+    def cook
+      super
+
       FileUtils.touch(checkpoint)
+    end
+
+    def checkpoint
+      File.join(@target, "#{self.name}-#{self.version}-#{self.host}.installed")
     end
 
     def patch
