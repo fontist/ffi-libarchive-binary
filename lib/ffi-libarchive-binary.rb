@@ -1,25 +1,29 @@
 # frozen_string_literal: true
 
 require "ffi-libarchive-binary/version"
-require "ffi"
 require "pathname"
 
 module LibarchiveBinary
   class Error < StandardError; end
 
-  module LibraryPath
-    LIBRARY_PATH = Pathname.new(File.join(__dir__, "ffi-libarchive-binary"))
+  LIBRARY_PATH = Pathname.new(File.join(__dir__, "ffi-libarchive-binary"))
+end
 
-    def ffi_lib(*names)
-      prefixed = names.map do |name|
-        paths = name.is_a?(Array) ? name : [name]
-        paths.map { |x| LIBRARY_PATH.join(FFI::map_library_name(x)).to_s }
+module Archive
+  module C
+    def self.ffi_lib(*args)
+      prefixed = args.map do |names|
+        filenames = names.is_a?(Array) ? names : [names]
+        with_path = filenames.map(&:to_s).map do |filename|
+          LibarchiveBinary::LIBRARY_PATH.join(FFI.map_library_name(filename)).to_s
+        end
+
+        with_path + filenames
       end
 
-      super(*(prefixed + names))
+      super(*prefixed)
     end
   end
-
-  ::FFI::Library.prepend(LibraryPath)
-  require "ffi-libarchive"
 end
+
+require "ffi-libarchive"
