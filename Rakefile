@@ -12,9 +12,6 @@ end
 desc "Define the gem task to build on any platform (compile on install)"
 task "platform:any" do
   spec = Gem::Specification::load("ffi-libarchive-binary.gemspec").dup
-  spec.extensions = ['ext/extconf.rb']
-  spec.add_runtime_dependency("mini_portile2", "~> 2.0")
-
   task = Gem::PackageTask.new(spec)
   task.define
 end
@@ -39,6 +36,8 @@ platforms.each do |platform, host, lib|
     spec = Gem::Specification::load("ffi-libarchive-binary.gemspec").dup
     spec.platform = Gem::Platform.new(platform)
     spec.files += ["lib/ffi-libarchive-binary/#{lib}"]
+    spec.extensions = []
+    spec.dependencies.reject! { |d| d.name == "mini_portile2" }
 
     task = Gem::PackageTask.new(spec)
     task.define

@@ -25,6 +25,8 @@ Gem::Specification.new do |spec|
   spec.bindir        = "exe"
   spec.executables   = spec.files.grep(%r{\Aexe/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
+  spec.extensions    = ['ext/extconf.rb']
 
   spec.add_runtime_dependency "ffi-libarchive", "~> 1.0"
+  spec.add_runtime_dependency "mini_portile2", "~> 2.0"
 end
