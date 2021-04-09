@@ -1,0 +1,136 @@
+name: tests
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+
+jobs:
+  pack:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            platform: x86-mingw32
+          - os: windows-latest
+            platform: x64-mingw32
+          - os: macos-latest
+            platform: x86_64-darwin
+          - os: macos-latest
+            platform: arm64-darwin
+          - os: ubuntu-latest
+            platform: x86-linux
+          - os: ubuntu-latest
+            platform: x86_64-linux
+          - os: ubuntu-latest
+            platform: any
+    steps:
+      - uses: actions/checkout@master
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '2.4'
+          bundler-cache: true
+
+      - run: bundle exec rake gem:native:${{ matrix.platform }}
+
+      - if: matrix.os == 'windows-latest'
+        run: ldd lib/ffi-libarchive-binary/libarchive-13.dll
+
+      - if: matrix.os == 'macos-latest'
+        run: otool -L lib/ffi-libarchive-binary/libarchive.dylib
+
+      - if: matrix.os == 'ubuntu-latest' && matrix.platform != 'any'
+        run: ldd lib/ffi-libarchive-binary/libarchive.so
+
+      - run: |
+          cd pkg/
+          gem unpack ffi-libarchive-binary-*.gem
+          ls */lib/ffi-libarchive-binary
+
+      - run: gem specification pkg/ffi-libarchive-binary-*.gem
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: pkg
+          path: pkg/*.gem
+
+      - if: matrix.platform != 'any'
+        uses: actions/upload-artifact@v2
+        with:
+          name: lib-${{ matrix.platform }}
+          path: |
+            lib/ffi-libarchive-binary/*.dll
+            lib/ffi-libarchive-binary/*.dylib
+            lib/ffi-libarchive-binary/*.so
+
+  test:
+    needs: pack
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        ruby: [ '2.4', '2.5', '2.6', '2.7', '3.0' ]
+        os: [ windows-latest, macos-latest, ubuntu-latest ]
+        include:
+          - os: windows-latest
+            platform: x64-mingw32
+          - os: macos-latest
+            platform: x86_64-darwin
+          - os: ubuntu-latest
+            platform: x86_64-linux
+
+    steps:
+      - uses: actions/checkout@master
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby }}
+          bundler-cache: true
+
+      - uses: actions/download-artifact@v2
+        with:
+          name: lib-${{ matrix.platform }}
+          path: lib/ffi-libarchive-binary
+
+      - run: bundle exec rspec
+
+  metanorma:
+    needs: pack
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        ruby: [ '2.4', '2.5', '2.6', '2.7', '3.0' ]
+        os: [ windows-latest, macos-latest, ubuntu-latest ]
+        include:
+          - os: windows-latest
+            platform: x64-mingw32
+          - os: macos-latest
+            platform: x86_64-darwin
+          - os: ubuntu-latest
+            platform: x86_64-linux
+    steps:
+      - uses: actions/checkout@master
+        with:
+          repository: metanorma/metanorma
+
+      - uses: actions/download-artifact@v2
+        with:
+          name: pkg
+          path: pkg
+
+      - name: Setup ffi-libarchive-binary
+        run: |
+          gem unpack --target pkg pkg/ffi-libarchive-binary-*-${{ matrix.platform }}.gem
+          mv pkg/ffi-libarchive-binary-*-${{ matrix.platform }} pkg/ffi-libarchive-binary
+          echo "gem 'ffi-libarchive-binary', path: 'pkg/ffi-libarchive-binary'" > Gemfile.devel
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby }}
+          bundler-cache: true
+
+      - run: bundle exec rake
