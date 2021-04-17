@@ -7,18 +7,32 @@ module LibarchiveBinary
   class Error < StandardError; end
 
   LIBRARY_PATH = Pathname.new(File.join(__dir__, "ffi-libarchive-binary"))
+
+  def self.lib_path
+    LIBRARY_PATH.join(lib_filename).to_s
+  end
+
+  def self.lib_filename
+    if FFI::Platform.windows?
+      "libarchive-13.dll"
+    elsif FFI::Platform.mac?
+      "libarchive.dylib"
+    else
+      "libarchive.so"
+    end
+  end
 end
 
 module Archive
   module C
     def self.ffi_lib(*args)
       prefixed = args.map do |names|
-        filenames = names.is_a?(Array) ? names : [names]
-        with_path = filenames.map(&:to_s).map do |filename|
-          LibarchiveBinary::LIBRARY_PATH.join(FFI.map_library_name(filename)).to_s
+        paths = names.is_a?(Array) ? names : [names]
+        if paths.any? { |f| f.include?("libarchive") }
+          [LibarchiveBinary.lib_path] + paths
+        else
+          names
         end
-
-        with_path + filenames
       end
 
       super(*prefixed)

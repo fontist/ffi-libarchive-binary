@@ -105,6 +105,7 @@ jobs:
       matrix:
         ruby: [ '2.4', '2.5', '2.6', '2.7', '3.0' ]
         os: [ windows-latest, macos-latest, ubuntu-latest ]
+        experimental: [true]
         include:
           - os: windows-latest
             platform: x64-mingw32
