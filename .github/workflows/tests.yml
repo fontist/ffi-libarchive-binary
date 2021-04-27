@@ -12,20 +12,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: windows-latest
-            platform: x86-mingw32
-          - os: windows-latest
-            platform: x64-mingw32
-          - os: macos-latest
-            platform: x86_64-darwin
-          - os: macos-latest
-            platform: arm64-darwin
-          - os: ubuntu-latest
-            platform: x86-linux
-          - os: ubuntu-latest
+          - os: ubuntu-16.04
             platform: x86_64-linux
-          - os: ubuntu-latest
-            platform: any
     steps:
       - uses: actions/checkout@master
 
@@ -42,7 +30,7 @@ jobs:
       - if: matrix.os == 'macos-latest'
         run: otool -L lib/ffi-libarchive-binary/libarchive.dylib
 
-      - if: matrix.os == 'ubuntu-latest' && matrix.platform != 'any'
+      - if: matrix.os == 'ubuntu-16.04' && matrix.platform != 'any'
         run: ldd lib/ffi-libarchive-binary/libarchive.so
 
       - run: |
@@ -72,14 +60,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ruby: [ '2.4', '2.5', '2.6', '2.7', '3.0' ]
-        os: [ windows-latest, macos-latest, ubuntu-latest ]
+        ruby: [ '2.4' ]
+        os: [ ubuntu-16.04
         include:
-          - os: windows-latest
-            platform: x64-mingw32
-          - os: macos-latest
-            platform: x86_64-darwin
-          - os: ubuntu-latest
+          - os: ubuntu-16.04
             platform: x86_64-linux
 
     steps:
@@ -103,15 +87,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ruby: [ '2.4', '2.5', '2.6', '2.7', '3.0' ]
-        os: [ windows-latest, macos-latest, ubuntu-latest ]
+        ruby: [ '2.4' ]
+        os: [ ubuntu-16.04 ]
         experimental: [true]
         include:
-          - os: windows-latest
-            platform: x64-mingw32
-          - os: macos-latest
-            platform: x86_64-darwin
-          - os: ubuntu-latest
+          - os: ubuntu-16.04
             platform: x86_64-linux
     steps:
       - uses: actions/checkout@master
