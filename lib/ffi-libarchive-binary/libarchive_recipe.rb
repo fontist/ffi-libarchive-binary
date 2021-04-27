@@ -30,8 +30,8 @@ module LibarchiveBinary
         "--without-lzma",
         "--without-cng",
         "--without-xml2",
+        "--without-openssl",
         "--with-expat",
-        "--with-openssl",
         "--disable-acl",
       ]
     end
