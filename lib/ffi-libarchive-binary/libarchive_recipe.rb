@@ -60,6 +60,8 @@ module LibarchiveBinary
       aString = aFile.read
       aFile.close
 
+      p aString
+
       aString.gsub!(searchString, replaceString)
 
       File.open(fileName, "w") { |file| file << aString }
