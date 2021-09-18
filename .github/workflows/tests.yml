@@ -35,6 +35,12 @@ jobs:
           ruby-version: '2.5'
           bundler-cache: true
 
+      - uses: actions/cache@v2
+        with:
+          path: ports/archives
+          key: ports_archives
+          restore-keys: ports_archives
+
       - run: bundle exec rake gem:native:${{ matrix.platform }}
 
       - if: matrix.os == 'windows-latest'
