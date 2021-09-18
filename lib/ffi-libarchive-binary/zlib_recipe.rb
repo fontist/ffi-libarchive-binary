@@ -35,11 +35,13 @@ module LibarchiveBinary
             f.puts "BINARY_PATH = #{path}/bin"
             f.puts "LIBRARY_PATH = #{path}/lib"
             f.puts "INCLUDE_PATH = #{path}/include"
+            f.puts "LOC = -fPIC"
             f.puts mk
           end
         end
       else
-        super
+        cmd = ["env", "CFLAGS=-fPIC", "LDFLAGS=-fPIC", "./configure"] + computed_options
+        execute("configure", cmd)
       end
     end
 

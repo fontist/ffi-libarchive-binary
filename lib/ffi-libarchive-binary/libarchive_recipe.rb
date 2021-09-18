@@ -45,18 +45,21 @@ module LibarchiveBinary
     def configure
       paths = [@zlib_recipe.path, @expat_recipe.path]
       cflags = paths.map { |k| "-I#{k}/include" }.join(" ")
-      cmd = ["env", "CFLAGS=#{cflags}", "./configure"] + configure_defaults + [configure_prefix]
+      cmd = ["env", "CFLAGS=#{cflags}", "./configure"] + computed_options
 
       execute("configure", cmd)
 
       # drop default libexpat and zlib
-      libz = File.join(@zlib_recipe.path, "lib", "libz.a"),
+      libz = File.join(@zlib_recipe.path, "lib", "libz.a")
       libexpat = File.join(@expat_recipe.path, "lib", "libexpat.a")
-      replace_in_file(" -lz ", " #{libz} ", File.join(work_path, "Makefile"))
-      replace_in_file(" -lexpat ", " #{libexpat} ", File.join(work_path, "Makefile"))
+      makefile = File.join(work_path, "Makefile")
+      replace_in_file(" -lz ", " #{libz} ", makefile)
+      replace_in_file(" -lexpat ", " #{libexpat} ", makefile)
     end
 
     def replace_in_file(search_str, replace_str, filename)
+      puts "Replace \"#{search_str}\" with \"#{replace_str}\" in #{filename}"
+
       f = File.open(filename, "r")
       content = f.read
       f.close
