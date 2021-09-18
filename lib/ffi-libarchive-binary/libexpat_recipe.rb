@@ -19,9 +19,13 @@ module LibarchiveBinary
     def configure_defaults
       [
         "--host=#{@host}",
-        "--disable-shared",
         "--enable-static",
       ]
+    end
+
+    def configure
+      cmd = ["env", "CFLAGS=-fPIC", "LDFLAGS=-fPIC", "./configure"] + computed_options
+      execute("configure", cmd)
     end
 
     def checkpoint
