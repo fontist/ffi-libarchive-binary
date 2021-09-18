@@ -45,26 +45,25 @@ module LibarchiveBinary
     def configure
       paths = [@zlib_recipe.path, @expat_recipe.path]
       cflags = paths.map { |k| "-I#{k}/include" }.join(" ")
-      libs = [File.join(@zlib_recipe.path, "lib", "libz.a"),
-              File.join(@expat_recipe.path, "lib", "libexpat.a")].join(" ")
-      cmd = ["env", "CFLAGS=#{cflags}", "LIBS=#{libs}", "./configure"] + configure_defaults + [configure_prefix]
+      cmd = ["env", "CFLAGS=#{cflags}", "./configure"] + configure_defaults + [configure_prefix]
 
       execute("configure", cmd)
 
       # drop default libexpat and zlib
-      replace_in_file("LIBS = -lexpat -lz ", "LIBS = ", File.join(work_path, "Makefile"))
+      libz = File.join(@zlib_recipe.path, "lib", "libz.a"),
+      libexpat = File.join(@expat_recipe.path, "lib", "libexpat.a")
+      replace_in_file(" -lz ", " #{libz} ", File.join(work_path, "Makefile"))
+      replace_in_file(" -lexpat ", " #{libexpat} ", File.join(work_path, "Makefile"))
     end
 
-    def replace_in_file(searchString, replaceString, fileName)
-      aFile = File.open(fileName, "r")
-      aString = aFile.read
-      aFile.close
+    def replace_in_file(search_str, replace_str, filename)
+      f = File.open(filename, "r")
+      content = f.read
+      f.close
 
-      p aString
+      content.gsub!(search_str, replace_str)
 
-      aString.gsub!(searchString, replaceString)
-
-      File.open(fileName, "w") { |file| file << aString }
+      File.open(filename, "w") { |f| f << content }
     end
 
     def activate
