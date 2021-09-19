@@ -43,6 +43,12 @@ jobs:
 
       - run: bundle exec rake gem:native:${{ matrix.platform }}
 
+      - uses: actions/upload-artifact@v2
+        if: failure()
+        with:
+          name: build-logs-${{ matrix.platform }}
+          path: tmp/*/ports/*/*/*.log
+
       - if: matrix.os == 'windows-latest'
         run: ldd lib/ffi-libarchive-binary/libarchive-13.dll
 
