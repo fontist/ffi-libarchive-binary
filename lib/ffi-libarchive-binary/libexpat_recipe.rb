@@ -19,6 +19,7 @@ module LibarchiveBinary
     def configure_defaults
       [
         "--host=#{@host}",
+        "--disable-shared",
         "--enable-static",
       ]
     end

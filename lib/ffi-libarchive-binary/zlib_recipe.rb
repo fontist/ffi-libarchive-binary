@@ -35,6 +35,7 @@ module LibarchiveBinary
             f.puts "BINARY_PATH = #{path}/bin"
             f.puts "LIBRARY_PATH = #{path}/lib"
             f.puts "INCLUDE_PATH = #{path}/include"
+            f.puts "SHARED_MODE = 0"
             f.puts "LOC = -fPIC"
             f.puts mk
           end
@@ -57,7 +58,7 @@ module LibarchiveBinary
 
     def compile
       if LibarchiveBinary::windows?
-        execute("compile", "make -f win32/Makefile.gcc")
+        execute("compile", "make -f win32/Makefile.gcc libz.a")
       else
         super
       end
