@@ -52,6 +52,14 @@ module LibarchiveBinary
       # drop default libexpat and zlib
       libz = File.join(@zlib_recipe.path, "lib", "libz.a")
       libexpat = File.join(@expat_recipe.path, "lib", "libexpat.a")
+
+      if LibarchiveBinary::windows?
+        # https://stackoverflow.com/a/14112368/902217
+        static_link_pref = "-Wl,-Bstatic,"
+        libz = libz.prepend(static_link_pref)
+        libexpat = libexpat.prepend(static_link_pref)
+      end
+
       makefile = File.join(work_path, "Makefile")
       replace_in_file(" -lz ", " #{libz} ", makefile)
       replace_in_file(" -lexpat ", " #{libexpat} ", makefile)
