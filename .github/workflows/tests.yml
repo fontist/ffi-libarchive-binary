@@ -49,14 +49,11 @@ jobs:
           name: build-logs-${{ matrix.platform }}
           path: tmp/*/ports/*/*/*.log
 
-      - if: matrix.os == 'windows-latest'
-        run: ldd lib/ffi-libarchive-binary/libarchive-13.dll
-
-      - if: matrix.os == 'macos-latest'
-        run: otool -L lib/ffi-libarchive-binary/libarchive.dylib
-
-      - if: matrix.os == 'ubuntu-latest' && matrix.platform != 'any'
-        run: ldd lib/ffi-libarchive-binary/libarchive.so
+      - if: matrix.platform != 'any'
+        uses: metanorma/metanorma-build-scripts/native-deps-action@master
+        with:
+          libname: archive
+          directory: lib/ffi-libarchive-binary
 
       - run: |
           cd pkg/
@@ -75,9 +72,7 @@ jobs:
         with:
           name: lib-${{ matrix.platform }}
           path: |
-            lib/ffi-libarchive-binary/*.dll
-            lib/ffi-libarchive-binary/*.dylib
-            lib/ffi-libarchive-binary/*.so
+            lib/ffi-libarchive-binary/libarchive*
 
   test:
     needs: pack
