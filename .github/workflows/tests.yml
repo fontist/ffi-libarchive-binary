@@ -2,7 +2,7 @@ name: tests
 
 on:
   push:
-    branches: [ master ]
+    branches: [ main, master ]
   pull_request:
   workflow_dispatch:
 
@@ -26,9 +26,11 @@ jobs:
           - os: ubuntu-latest
             platform: x86_64-linux
           - os: ubuntu-latest
+            platform: aarch64-linux
+          - os: ubuntu-latest
             platform: any
     steps:
-      - uses: actions/checkout@master
+      - uses: actions/checkout@v2
 
       - uses: ruby/setup-ruby@v1
         with:
@@ -41,6 +43,11 @@ jobs:
           key: ports_archives
           restore-keys: ports_archives
 
+      - if: matrix.platform == 'aarch64-linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install gcc-aarch64-linux-gnu g++-aarch64-linux-gnu binutils-aarch64-linux-gnu gperf
+
       - run: bundle exec rake gem:native:${{ matrix.platform }}
 
       - uses: actions/upload-artifact@v2
@@ -50,7 +57,7 @@ jobs:
           path: tmp/*/ports/*/*/*.log
 
       - if: matrix.platform != 'any'
-        uses: metanorma/metanorma-build-scripts/native-deps-action@master
+        uses: metanorma/metanorma-build-scripts/native-deps-action@main
         with:
           libname: archive
           directory: lib/ffi-libarchive-binary
@@ -91,7 +98,7 @@ jobs:
             platform: x86_64-linux
 
     steps:
-      - uses: actions/checkout@master
+      - uses: actions/checkout@v2
 
       - uses: ruby/setup-ruby@v1
         with:
@@ -122,9 +129,11 @@ jobs:
           - os: ubuntu-latest
             platform: x86_64-linux
     steps:
-      - uses: actions/checkout@master
+      - uses: actions/checkout@v2
         with:
           repository: metanorma/metanorma
+
+      - uses: metanorma/metanorma-build-scripts/inkscape-setup-action@main
 
       - uses: actions/download-artifact@v2
         with:

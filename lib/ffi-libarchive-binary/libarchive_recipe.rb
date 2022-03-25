@@ -89,7 +89,10 @@ module LibarchiveBinary
     end
 
     def cook
+      @zlib_recipe.host = @host if @host
       @zlib_recipe.cook_if_not
+
+      @expat_recipe.host = @host if @host
       @expat_recipe.cook_if_not
 
       super

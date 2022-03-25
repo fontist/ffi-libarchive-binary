@@ -21,6 +21,7 @@ platforms = [
   ["x64-mingw32", "x86_64-w64-mingw32", "libarchive-13.dll"],
   ["x86-linux", "i686-linux-gnu", "libarchive.so"],
   ["x86_64-linux", "x86_64-linux-gnu", "libarchive.so"],
+  ["aarch64-linux", "aarch64-linux-gnu", "libarchive.so"],
   ["x86_64-darwin", "x86_64-darwin", "libarchive.dylib"],
   ["arm64-darwin", "arm64-darwin", "libarchive.dylib"],
 ]
