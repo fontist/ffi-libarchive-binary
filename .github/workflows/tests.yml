@@ -44,6 +44,7 @@ jobs:
           restore-keys: ports_archives
 
       - if: matrix.platform == 'aarch64-linux'
+        name: Install aarch64 compilers
         run: |
           sudo apt-get update
           sudo apt-get install gcc-aarch64-linux-gnu g++-aarch64-linux-gnu binutils-aarch64-linux-gnu gperf

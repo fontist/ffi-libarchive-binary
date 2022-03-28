@@ -3,6 +3,7 @@ require "pathname"
 
 require_relative "zlib_recipe"
 require_relative "libexpat_recipe"
+require_relative "openssl_recipe"
 
 module LibarchiveBinary
   class LibarchiveRecipe < MiniPortile
@@ -18,8 +19,10 @@ module LibarchiveBinary
 
       @zlib_recipe = ZLibRecipe.new
       @expat_recipe = LibexpatRecipe.new
+      @openssl_recipe = OpensslRecipe.new
 
       @target = ROOT.join(@target).to_s
+      @printed = {}
     end
 
     def configure_defaults
@@ -43,7 +46,7 @@ module LibarchiveBinary
     end
 
     def configure
-      paths = [@zlib_recipe.path, @expat_recipe.path]
+      paths = [@zlib_recipe.path, @expat_recipe.path, @openssl_recipe.path]
       cflags = paths.map { |k| "-I#{k}/include" }.join(" ")
       cmd = ["env", "CFLAGS=#{cflags}", "./configure"] + computed_options
 
@@ -52,6 +55,7 @@ module LibarchiveBinary
       # drop default libexpat and zlib
       libz = File.join(@zlib_recipe.path, "lib", "libz.a")
       libexpat = File.join(@expat_recipe.path, "lib", "libexpat.a")
+      openssl = File.join(@openssl_recipe.path, "lib", "libcrypto.a")
 
       if LibarchiveBinary::windows?
         # https://stackoverflow.com/a/14112368/902217
@@ -63,6 +67,7 @@ module LibarchiveBinary
       makefile = File.join(work_path, "Makefile")
       replace_in_file(" -lz ", " #{libz} ", makefile)
       replace_in_file(" -lexpat ", " #{libexpat} ", makefile)
+      replace_in_file(" -lcrypto ", " #{openssl} ", makefile)
     end
 
     def replace_in_file(search_str, replace_str, filename)
@@ -80,6 +85,7 @@ module LibarchiveBinary
     def activate
       @zlib_recipe.activate
       @expat_recipe.activate
+      @openssl_recipe.activate
 
       super
     end
@@ -94,6 +100,9 @@ module LibarchiveBinary
 
       @expat_recipe.host = @host if @host
       @expat_recipe.cook_if_not
+
+      @openssl_recipe.host = @host if @host
+      @openssl_recipe.cook_if_not
 
       super
 
@@ -117,6 +126,17 @@ module LibarchiveBinary
       libs = Dir.glob(File.join(port_path, "{lib,bin}", "*"))
         .grep(/\/(?:lib)?[a-zA-Z0-9\-]+\.(?:so|dylib|dll)$/)
       FileUtils.cp_r(libs, ROOT.join("lib", "ffi-libarchive-binary"), verbose: true)
+    end
+
+    def message(text)
+      return super unless text.start_with?("\rDownloading")
+
+      match = text.match(/(\rDownloading .*)\(\s*\d+%\)/)
+      pattern = match ? match[1] : text
+      return if @printed[pattern]
+
+      @printed[pattern] = true
+      super
     end
   end
 end
