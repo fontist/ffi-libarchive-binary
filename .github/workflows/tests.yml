@@ -28,7 +28,7 @@ jobs:
           - os: ubuntu-latest
             platform: any
     steps:
-      - uses: actions/checkout@master
+      - uses: actions/checkout@v3
 
       - uses: ruby/setup-ruby@v1
         with:
@@ -50,7 +50,7 @@ jobs:
           path: tmp/*/ports/*/*/*.log
 
       - if: matrix.platform != 'any'
-        uses: metanorma/metanorma-build-scripts/native-deps-action@master
+        uses: metanorma/metanorma-build-scripts/native-deps-action@main
         with:
           libname: archive
           directory: lib/ffi-libarchive-binary
@@ -91,7 +91,7 @@ jobs:
             platform: x86_64-linux
 
     steps:
-      - uses: actions/checkout@master
+      - uses: actions/checkout@v3
 
       - uses: ruby/setup-ruby@v1
         with:
@@ -122,7 +122,7 @@ jobs:
           - os: ubuntu-latest
             platform: x86_64-linux
     steps:
-      - uses: actions/checkout@master
+      - uses: actions/checkout@v3
         with:
           repository: metanorma/metanorma
 
