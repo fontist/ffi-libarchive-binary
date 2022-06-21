@@ -13,12 +13,17 @@ jobs:
         platform:
           - x86-mingw32
           - x64-mingw32
+        ruby:
+          - '2.5'
+        include:
+          - platform: x64-mingw-ucrt
+            ruby: '3.1'
     steps:
       - uses: actions/checkout@v1
 
       - uses: ruby/setup-ruby@v1
         with:
-          ruby-version: '2.5'
+          ruby-version: ${{ matrix.ruby }}
           bundler-cache: true
 
       - run: bundle exec rake gem:native:${{ matrix.platform }}
