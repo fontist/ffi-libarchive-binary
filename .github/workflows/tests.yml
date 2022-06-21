@@ -15,28 +15,28 @@ jobs:
         include:
           - os: windows-latest
             platform: x86-mingw32
-            ruby: '2.5'
+            ruby: '2.7'
           - os: windows-latest
             platform: x64-mingw32
-            ruby: '2.5'
+            ruby: '2.7'
           - os: windows-latest
             platform: x64-mingw-ucrt
             ruby: '3.1'
           - os: macos-latest
             platform: x86_64-darwin
-            ruby: '2.5'
+            ruby: '2.7'
           - os: macos-latest
             platform: arm64-darwin
-            ruby: '2.5'
+            ruby: '2.7'
           - os: ubuntu-latest
             platform: x86-linux
-            ruby: '2.5'
+            ruby: '2.7'
           - os: ubuntu-latest
             platform: x86_64-linux
-            ruby: '2.5'
+            ruby: '2.7'
           - os: ubuntu-latest
             platform: any
-            ruby: '2.5'
+            ruby: '2.7'
     steps:
       - uses: actions/checkout@v3
 
@@ -154,7 +154,16 @@ jobs:
           mv pkg/ffi-libarchive-binary-*-${{ matrix.platform }} pkg/ffi-libarchive-binary
           echo "gem 'ffi-libarchive-binary', path: 'pkg/ffi-libarchive-binary'" > Gemfile.devel
 
-      - uses: ruby/setup-ruby@v1
+      # https://github.com/rubygems/rubygems/issues/5160
+      - if: matrix.ruby == '3.0'
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby }}
+          bundler-cache: true
+          rubygems: latest
+
+      - if: matrix.ruby != '3.0'
+        uses: ruby/setup-ruby@v1
         with:
           ruby-version: ${{ matrix.ruby }}
           bundler-cache: true
