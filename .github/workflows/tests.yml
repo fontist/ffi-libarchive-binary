@@ -37,6 +37,9 @@ jobs:
           - os: ubuntu-latest
             platform: any
             ruby: '2.7'
+    concurrency:
+      group: '${{ github.workflow }}-${{ github.job }}-${{ matrix.os }}-${{ matrix.ruby }}-${{ matrix.platform }}-${{ github.head_ref || github.ref_name }}'
+      cancel-in-progress: true
     steps:
       - uses: actions/checkout@v3
 
@@ -99,7 +102,9 @@ jobs:
             platform: x86_64-darwin
           - os: ubuntu-latest
             platform: x86_64-linux
-
+    concurrency:
+      group: '${{ github.workflow }}-${{ github.job }}-${{ matrix.os }}-${{ matrix.ruby }}-${{ matrix.platform }}-${{ github.head_ref || github.ref_name }}'
+      cancel-in-progress: true
     steps:
       - uses: actions/checkout@v3
 
@@ -138,6 +143,9 @@ jobs:
             platform: x86_64-darwin
           - os: ubuntu-latest
             platform: x86_64-linux
+    concurrency:
+      group: '${{ github.workflow }}-${{ github.job }}-${{ matrix.os }}-${{ matrix.ruby }}-${{ matrix.platform }}-${{ github.head_ref || github.ref_name }}'
+      cancel-in-progress: true
     steps:
       - uses: actions/checkout@v3
         with:
