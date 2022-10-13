@@ -2,7 +2,7 @@ name: tests
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ main ]
   pull_request:
   workflow_dispatch:
 
@@ -15,26 +15,39 @@ jobs:
         include:
           - os: windows-latest
             platform: x86-mingw32
+            ruby: '2.7'
           - os: windows-latest
             platform: x64-mingw32
+            ruby: '2.7'
+          - os: windows-latest
+            platform: x64-mingw-ucrt
+            ruby: '3.1'
           - os: macos-latest
             platform: x86_64-darwin
+            ruby: '2.7'
           - os: macos-latest
             platform: arm64-darwin
+            ruby: '2.7'
           - os: ubuntu-latest
             platform: x86-linux
+            ruby: '2.7'
           - os: ubuntu-latest
             platform: x86_64-linux
+            ruby: '2.7'
           - os: ubuntu-latest
             platform: aarch64-linux
           - os: ubuntu-latest
             platform: any
+            ruby: '2.7'
+    concurrency:
+      group: '${{ github.workflow }}-${{ github.job }}-${{ matrix.os }}-${{ matrix.ruby }}-${{ matrix.platform }}-${{ github.head_ref || github.ref_name }}'
+      cancel-in-progress: true
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - uses: ruby/setup-ruby@v1
         with:
-          ruby-version: '2.5'
+          ruby-version: ${{ matrix.ruby }}
           bundler-cache: true
 
       - uses: actions/cache@v2
@@ -88,7 +101,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ruby: [ '2.5', '2.6', '2.7', '3.0' ]
+        ruby: [ '2.7', '3.0', '3.1' ]
         os: [ windows-latest, macos-latest, ubuntu-latest ]
         include:
           - os: windows-latest
@@ -97,9 +110,11 @@ jobs:
             platform: x86_64-darwin
           - os: ubuntu-latest
             platform: x86_64-linux
-
+    concurrency:
+      group: '${{ github.workflow }}-${{ github.job }}-${{ matrix.os }}-${{ matrix.ruby }}-${{ matrix.platform }}-${{ github.head_ref || github.ref_name }}'
+      cancel-in-progress: true
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - uses: ruby/setup-ruby@v1
         with:
@@ -119,18 +134,28 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ruby: [ '2.5', '2.6', '2.7', '3.0' ]
-        os: [ windows-latest, macos-latest, ubuntu-latest ]
+        ruby: [ '2.7', '3.0', '3.1' ]
+        os: [ macos-latest, ubuntu-latest ]
         experimental: [true]
         include:
           - os: windows-latest
             platform: x64-mingw32
+            ruby: '2.7'
+          - os: windows-latest
+            platform: x64-mingw32
+            ruby: '3.0'
+          - os: windows-latest
+            platform: x64-mingw-ucrt
+            ruby: '3.1'
           - os: macos-latest
             platform: x86_64-darwin
           - os: ubuntu-latest
             platform: x86_64-linux
+    concurrency:
+      group: '${{ github.workflow }}-${{ github.job }}-${{ matrix.os }}-${{ matrix.ruby }}-${{ matrix.platform }}-${{ github.head_ref || github.ref_name }}'
+      cancel-in-progress: true
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           repository: metanorma/metanorma
 
@@ -147,9 +172,20 @@ jobs:
           mv pkg/ffi-libarchive-binary-*-${{ matrix.platform }} pkg/ffi-libarchive-binary
           echo "gem 'ffi-libarchive-binary', path: 'pkg/ffi-libarchive-binary'" > Gemfile.devel
 
-      - uses: ruby/setup-ruby@v1
+      # https://github.com/rubygems/rubygems/issues/5160
+      - if: matrix.ruby == '3.0'
+        uses: ruby/setup-ruby@v1
         with:
           ruby-version: ${{ matrix.ruby }}
           bundler-cache: true
+          rubygems: latest
+
+      - if: matrix.ruby != '3.0'
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby }}
+          bundler-cache: true
+
+      - uses: metanorma/metanorma-build-scripts/inkscape-setup-action@main
 
       - run: bundle exec rake
