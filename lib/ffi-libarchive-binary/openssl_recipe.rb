@@ -15,16 +15,16 @@ module LibarchiveBinary
       @target = ROOT.join(@target).to_s
     end
 
-    def configure_defaults
-      [
-        "--host=#{@host}",
-        "--disable-shared",
-        "--enable-static",
-      ]
-    end
+#    def configure_defaults
+#      [
+#        "--host=#{@host}",
+#        "--disable-shared",
+#        "--enable-static",
+#      ]
+#    end
 
     def configure
-      cmd = ["env", "CFLAGS=-fPIC", "LDFLAGS=-fPIC", "./configure"] + computed_options
+      cmd = ["env", "CFLAGS=-fPIC", "LDFLAGS=-fPIC", "./config"] + computed_options.select { |v| v =~ /--prefix/ }
       execute("configure", cmd)
     end
 

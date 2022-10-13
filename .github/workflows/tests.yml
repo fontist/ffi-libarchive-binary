@@ -36,6 +36,7 @@ jobs:
             ruby: '2.7'
           - os: ubuntu-latest
             platform: aarch64-linux
+            ruby: '2.7'
           - os: ubuntu-latest
             platform: any
             ruby: '2.7'
