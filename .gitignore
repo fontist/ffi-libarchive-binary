@@ -13,3 +13,6 @@ vendor/
 *.dll
 *.dylib
 *.so
+
+# remote file cache
+.rubocop-*

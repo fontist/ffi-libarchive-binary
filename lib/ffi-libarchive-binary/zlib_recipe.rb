@@ -15,7 +15,7 @@ module LibarchiveBinary
 
       @files << {
         url: "http://zlib.net/fossils/zlib-1.2.11.tar.gz",
-        sha256: "c3e5e9fdd5004dcb542feda5ee4f0ff0744628baf8ed2dd5d66f8ca1197cb1a1"
+        sha256: "c3e5e9fdd5004dcb542feda5ee4f0ff0744628baf8ed2dd5d66f8ca1197cb1a1",
       }
 
       @target = ROOT.join(@target).to_s
@@ -23,7 +23,7 @@ module LibarchiveBinary
 
     def configure_defaults
       [
-        "--static"
+        "--static",
       ]
     end
 
@@ -41,7 +41,8 @@ module LibarchiveBinary
           end
         end
       else
-        cmd = ["env", "CFLAGS=-fPIC", "LDFLAGS=-fPIC", "./configure"] + computed_options
+        cmd = ["env", "CFLAGS=-fPIC", "LDFLAGS=-fPIC",
+               "./configure"] + computed_options
         execute("configure", cmd)
       end
     end
@@ -73,7 +74,7 @@ module LibarchiveBinary
     end
 
     def checkpoint
-      File.join(@target, "#{self.name}-#{self.version}-#{self.host}.installed")
+      File.join(@target, "#{name}-#{version}-#{host}.installed")
     end
 
     def cook_if_not

@@ -4,6 +4,12 @@ require "rake/clean"
 require "rubygems/package_task"
 require_relative "lib/ffi-libarchive-binary/libarchive_recipe"
 
+require "rspec/core/rake_task"
+require "rubocop/rake_task"
+
+RSpec::Core::RakeTask.new(:spec)
+RuboCop::RakeTask.new
+
 desc "Build install-compilation gem"
 task "gem:native:any" do
   sh "rake platform:any gem"
@@ -17,10 +23,8 @@ task "platform:any" do
 end
 
 platforms = [
-  ["x86-mingw32", "i686-w64-mingw32", "libarchive-13.dll"],
   ["x64-mingw32", "x86_64-w64-mingw32", "libarchive-13.dll"],
   ["x64-mingw-ucrt", "x86_64-w64-mingw32", "libarchive-13.dll"],
-  ["x86-linux", "i686-linux-gnu", "libarchive.so"],
   ["x86_64-linux", "x86_64-linux-gnu", "libarchive.so"],
   ["aarch64-linux", "aarch64-linux-gnu", "libarchive.so"],
   ["x86_64-darwin", "x86_64-darwin", "libarchive.dylib"],

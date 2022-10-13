@@ -20,13 +20,21 @@ Gem::Specification.new do |spec|
   spec.metadata["changelog_uri"] = "https://github.com/fontist/ffi-libarchive-binary"
 
   spec.files = Dir.chdir(File.expand_path(__dir__)) do
-    `git ls-files -z`.split("\x0").reject { |f| f.match(%r{\A(?:test|spec|features|bin|.github)/}) }
+    `git ls-files -z`.split("\x0").reject do |f|
+      f.match(%r{\A(?:test|spec|features|bin|.github)/})
+    end
   end
   spec.bindir        = "exe"
   spec.executables   = spec.files.grep(%r{\Aexe/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
-  spec.extensions    = ['ext/extconf.rb']
+  spec.extensions    = ["ext/extconf.rb"]
 
+  spec.add_runtime_dependency "bundler", "~> 2.3", ">= 2.3.22"
+  spec.add_runtime_dependency "ffi", "~> 1.0"
   spec.add_runtime_dependency "ffi-libarchive", "~> 1.0"
-  spec.add_runtime_dependency "mini_portile2", "~> 2.0"
+  spec.add_runtime_dependency "mini_portile2", "~> 2.7"
+  spec.add_runtime_dependency "rake", "~> 13.0"
+
+  spec.add_development_dependency "rspec", "~> 3.0"
+  spec.add_development_dependency "rubocop", "~> 1.4"
 end

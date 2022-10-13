@@ -1,7 +1,7 @@
 require "mini_portile2"
 
 module LibarchiveBinary
-  # based on 
+  # based on
   class LibexpatRecipe < MiniPortile
     ROOT = Pathname.new(File.expand_path("../..", __dir__))
 
@@ -10,7 +10,7 @@ module LibarchiveBinary
 
       @files << {
         url: "https://github.com/libexpat/libexpat/releases/download/R_2_4_1/expat-2.4.1.tar.gz",
-        sha256: "a00ae8a6b96b63a3910ddc1100b1a7ef50dc26dceb65ced18ded31ab392f132b"
+        sha256: "a00ae8a6b96b63a3910ddc1100b1a7ef50dc26dceb65ced18ded31ab392f132b",
       }
 
       @target = ROOT.join(@target).to_s
@@ -25,12 +25,13 @@ module LibarchiveBinary
     end
 
     def configure
-      cmd = ["env", "CFLAGS=-fPIC", "LDFLAGS=-fPIC", "./configure"] + computed_options
+      cmd = ["env", "CFLAGS=-fPIC", "LDFLAGS=-fPIC",
+             "./configure"] + computed_options
       execute("configure", cmd)
     end
 
     def checkpoint
-      File.join(@target, "#{self.name}-#{self.version}-#{self.host}.installed")
+      File.join(@target, "#{name}-#{version}-#{host}.installed")
     end
 
     def cook_if_not

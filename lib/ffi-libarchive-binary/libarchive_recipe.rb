@@ -14,7 +14,7 @@ module LibarchiveBinary
 
       @files << {
         url: "https://www.libarchive.org/downloads/libarchive-3.5.1.tar.gz",
-        sha256: "9015d109ec00bb9ae1a384b172bf2fc1dff41e2c66e5a9eeddf933af9db37f5a"
+        sha256: "9015d109ec00bb9ae1a384b172bf2fc1dff41e2c66e5a9eeddf933af9db37f5a",
       }
 
       @zlib_recipe = ZLibRecipe.new
@@ -110,7 +110,7 @@ module LibarchiveBinary
     end
 
     def checkpoint
-      File.join(@target, "#{self.name}-#{self.version}-#{self.host}.installed")
+      File.join(@target, "#{name}-#{version}-#{host}.installed")
     end
 
     def patch
@@ -125,7 +125,8 @@ module LibarchiveBinary
 
       libs = Dir.glob(File.join(port_path, "{lib,bin}", "*"))
         .grep(/\/(?:lib)?[a-zA-Z0-9\-]+\.(?:so|dylib|dll)$/)
-      FileUtils.cp_r(libs, ROOT.join("lib", "ffi-libarchive-binary"), verbose: true)
+      FileUtils.cp_r(libs, ROOT.join("lib", "ffi-libarchive-binary"),
+                     verbose: true)
     end
 
     def message(text)

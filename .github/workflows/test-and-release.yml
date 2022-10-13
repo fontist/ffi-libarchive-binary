@@ -1,10 +1,22 @@
-name: tests
+name: test-and-release
 
 on:
   push:
     branches: [ main ]
+    tags:     [ 'v*' ]
   pull_request:
   workflow_dispatch:
+
+concurrency:
+  group: '${{ github.workflow }}-${{ github.job }}-${{ github.head_ref || github.ref_name }}'
+  cancel-in-progress: true
+
+env:
+  BUNDLER_VER: 2.3.22
+# Forcing bundler version to ensure that it is consistent everywhere and
+# does not cause bundler gem reinstalls
+# bundler/rubygems 2.3.22 is a minimal requirement to support gnu/musl differentiation
+# https://github.com/rubygems/rubygems/pull/4488
 
 jobs:
   pack:
@@ -13,9 +25,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: windows-latest
-            platform: x86-mingw32
-            ruby: '2.7'
           - os: windows-latest
             platform: x64-mingw32
             ruby: '2.7'
@@ -29,9 +38,6 @@ jobs:
             platform: arm64-darwin
             ruby: '2.7'
           - os: ubuntu-latest
-            platform: x86-linux
-            ruby: '2.7'
-          - os: ubuntu-latest
             platform: x86_64-linux
             ruby: '2.7'
           - os: ubuntu-latest
@@ -40,22 +46,20 @@ jobs:
           - os: ubuntu-latest
             platform: any
             ruby: '2.7'
-    concurrency:
-      group: '${{ github.workflow }}-${{ github.job }}-${{ matrix.os }}-${{ matrix.ruby }}-${{ matrix.platform }}-${{ github.head_ref || github.ref_name }}'
-      cancel-in-progress: true
     steps:
       - uses: actions/checkout@v3
 
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: ${{ matrix.ruby }}
+          bundler: ${{ env.BUNDLER_VER }}
           bundler-cache: true
 
-      - uses: actions/cache@v2
+      - uses: actions/cache@v3
         with:
           path: ports/archives
           key: ports_archives
-          restore-keys: ports_archives
+          restore-keys: ports_archivesr
 
       - if: matrix.platform == 'aarch64-linux'
         name: Install aarch64 compilers
@@ -65,13 +69,13 @@ jobs:
 
       - run: bundle exec rake gem:native:${{ matrix.platform }}
 
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         if: failure()
         with:
           name: build-logs-${{ matrix.platform }}
           path: tmp/*/ports/*/*/*.log
 
-      - if: matrix.platform != 'any'
+      - if: matrix.platform != 'any' && matrix.platform != 'aarch64-linux'
         uses: metanorma/metanorma-build-scripts/native-deps-action@main
         with:
           libname: archive
@@ -84,17 +88,16 @@ jobs:
 
       - run: gem specification pkg/ffi-libarchive-binary-*.gem
 
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         with:
           name: pkg
           path: pkg/*.gem
 
       - if: matrix.platform != 'any'
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: lib-${{ matrix.platform }}
-          path: |
-            lib/ffi-libarchive-binary/libarchive*
+          path: lib/ffi-libarchive-binary/libarchive*
 
   test:
     needs: pack
@@ -111,15 +114,13 @@ jobs:
             platform: x86_64-darwin
           - os: ubuntu-latest
             platform: x86_64-linux
-    concurrency:
-      group: '${{ github.workflow }}-${{ github.job }}-${{ matrix.os }}-${{ matrix.ruby }}-${{ matrix.platform }}-${{ github.head_ref || github.ref_name }}'
-      cancel-in-progress: true
     steps:
       - uses: actions/checkout@v3
 
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: ${{ matrix.ruby }}
+          bundler: ${{ env.BUNDLER_VER }}
           bundler-cache: true
 
       - uses: actions/download-artifact@v2
@@ -152,9 +153,6 @@ jobs:
             platform: x86_64-darwin
           - os: ubuntu-latest
             platform: x86_64-linux
-    concurrency:
-      group: '${{ github.workflow }}-${{ github.job }}-${{ matrix.os }}-${{ matrix.ruby }}-${{ matrix.platform }}-${{ github.head_ref || github.ref_name }}'
-      cancel-in-progress: true
     steps:
       - uses: actions/checkout@v3
         with:
@@ -174,19 +172,52 @@ jobs:
           echo "gem 'ffi-libarchive-binary', path: 'pkg/ffi-libarchive-binary'" > Gemfile.devel
 
       # https://github.com/rubygems/rubygems/issues/5160
-      - if: matrix.ruby == '3.0'
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: ${{ matrix.ruby }}
-          bundler-cache: true
-          rubygems: latest
+#      - if: matrix.ruby == '3.0'
+#        uses: ruby/setup-ruby@v1
+#        with:
+#          ruby-version: ${{ matrix.ruby }}
+#          bundler: ${{ env.BUNDLER_VER }}
+#          bundler-cache: true
+#          rubygems: latest
 
-      - if: matrix.ruby != '3.0'
-        uses: ruby/setup-ruby@v1
+#      - if: matrix.ruby != '3.0'
+      - uses: ruby/setup-ruby@v1
         with:
           ruby-version: ${{ matrix.ruby }}
+          bundler: ${{ env.BUNDLER_VER }}
           bundler-cache: true
 
       - uses: metanorma/metanorma-build-scripts/inkscape-setup-action@main
 
       - run: bundle exec rake
+
+# ----- Release -----
+  release:
+    name: Release gem
+    needs: [ pack, test, metanorma ]
+    runs-on: ubuntu-latest
+#    if: contains(github.ref, 'refs/tags/v')
+    steps:
+    - uses: actions/checkout@v3
+
+    - uses: actions/download-artifact@v2
+      with:
+        name: pkg
+        path: pkg
+
+    - name: Publish to rubygems.org
+      env:
+        RUBYGEMS_API_KEY: ${{secrets.METANORMA_CI_RUBYGEMS_API_KEY}}
+      run: |
+        mkdir -p ~/.gem
+        touch ~/.gem/credentials
+        cat > ~/.gem/credentials << EOF
+        ---
+        :rubygems_api_key: ${RUBYGEMS_API_KEY}
+        EOF
+        chmod 0600 ~/.gem/credentials
+        gem signin
+        mkdir tmp
+        for gem in pkg/*.gem; do echo "Will do: 'gem push -V $gem'"; done
+
+#        for gem in pkg/*.gem; do gem push -V $gem; done
