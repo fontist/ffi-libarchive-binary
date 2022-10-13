@@ -123,7 +123,7 @@ jobs:
           bundler: ${{ env.BUNDLER_VER }}
           bundler-cache: true
 
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@v3
         with:
           name: lib-${{ matrix.platform }}
           path: lib/ffi-libarchive-binary
@@ -160,7 +160,7 @@ jobs:
 
       - uses: metanorma/metanorma-build-scripts/inkscape-setup-action@main
 
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@v3
         with:
           name: pkg
           path: pkg
@@ -171,23 +171,19 @@ jobs:
           mv pkg/ffi-libarchive-binary-*-${{ matrix.platform }} pkg/ffi-libarchive-binary
           echo "gem 'ffi-libarchive-binary', path: 'pkg/ffi-libarchive-binary'" > Gemfile.devel
 
-      # https://github.com/rubygems/rubygems/issues/5160
-#      - if: matrix.ruby == '3.0'
-#        uses: ruby/setup-ruby@v1
-#        with:
-#          ruby-version: ${{ matrix.ruby }}
-#          bundler: ${{ env.BUNDLER_VER }}
-#          bundler-cache: true
-#          rubygems: latest
-
-#      - if: matrix.ruby != '3.0'
-      - uses: ruby/setup-ruby@v1
+    # https://github.com/rubygems/rubygems/issues/5160
+      - if: matrix.ruby == '3.0' || matrix.os != 'windows-latest'
+        uses: ruby/setup-ruby@v1
         with:
           ruby-version: ${{ matrix.ruby }}
-          bundler: ${{ env.BUNDLER_VER }}
           bundler-cache: true
+          rubygems: latest
 
-      - uses: metanorma/metanorma-build-scripts/inkscape-setup-action@main
+      - if: matrix.ruby != '3.0' || matrix.os == 'windows-latest'
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby }}
+          bundler-cache: true
 
       - run: bundle exec rake
 
@@ -196,18 +192,18 @@ jobs:
     name: Release gem
     needs: [ pack, test, metanorma ]
     runs-on: ubuntu-latest
-#    if: contains(github.ref, 'refs/tags/v')
+    if: contains(github.ref, 'refs/tags/v')
     steps:
     - uses: actions/checkout@v3
 
-    - uses: actions/download-artifact@v2
+    - uses: actions/download-artifact@v3
       with:
         name: pkg
         path: pkg
 
     - name: Publish to rubygems.org
       env:
-        RUBYGEMS_API_KEY: ${{secrets.METANORMA_CI_RUBYGEMS_API_KEY}}
+        RUBYGEMS_API_KEY: ${{secrets.FONTIST_CI_RUBYGEMS_API_KEY}}
       run: |
         mkdir -p ~/.gem
         touch ~/.gem/credentials
@@ -218,6 +214,6 @@ jobs:
         chmod 0600 ~/.gem/credentials
         gem signin
         mkdir tmp
-        for gem in pkg/*.gem; do echo "Will do: 'gem push -V $gem'"; done
+        for gem in pkg/*.gem; do gem push -V $gem; done
 
-#        for gem in pkg/*.gem; do gem push -V $gem; done
+#        for gem in pkg/*.gem; do echo "Will do: 'gem push -V $gem'"; done

@@ -6,11 +6,11 @@ module LibarchiveBinary
     ROOT = Pathname.new(File.expand_path("../..", __dir__))
 
     def initialize
-      super("libexpat", "2.4.1")
+      super("libexpat", "2.4.9")
 
       @files << {
-        url: "https://github.com/libexpat/libexpat/releases/download/R_2_4_1/expat-2.4.1.tar.gz",
-        sha256: "a00ae8a6b96b63a3910ddc1100b1a7ef50dc26dceb65ced18ded31ab392f132b",
+        url: "https://github.com/libexpat/libexpat/releases/download/R_2_4_9/expat-2.4.9.tar.gz", # rubocop:disable Layout/LineLength
+        sha256: "4415710268555b32c4e5ab06a583bea9fec8ff89333b218b70b43d4ca10e38fa",               # rubocop:disable Layout/LineLength
       }
 
       @target = ROOT.join(@target).to_s

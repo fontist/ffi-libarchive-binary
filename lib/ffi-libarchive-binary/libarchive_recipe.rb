@@ -10,11 +10,11 @@ module LibarchiveBinary
     ROOT = Pathname.new(File.expand_path("../..", __dir__))
 
     def initialize
-      super("libarchive", "3.5.1")
+      super("libarchive", "3.6.1")
 
       @files << {
-        url: "https://www.libarchive.org/downloads/libarchive-3.5.1.tar.gz",
-        sha256: "9015d109ec00bb9ae1a384b172bf2fc1dff41e2c66e5a9eeddf933af9db37f5a",
+        url: "https://www.libarchive.org/downloads/libarchive-3.6.1.tar.gz",          # rubocop:disable Layout/LineLength
+        sha256: "c676146577d989189940f1959d9e3980d28513d74eedfbc6b7f15ea45fe54ee2",   # rubocop:disable Layout/LineLength
       }
 
       @zlib_recipe = ZLibRecipe.new
@@ -27,21 +27,11 @@ module LibarchiveBinary
 
     def configure_defaults
       [
-        "--host=#{@host}",
-        "--disable-bsdtar",
-        "--disable-bsdcat",
-        "--disable-bsdcpio",
-        "--without-bz2lib",
-        "--without-libb2",
-        "--without-iconv",
-        "--without-lz4",
-        "--without-zstd",
-        "--without-lzma",
-        "--without-cng",
-        "--without-xml2",
-        "--with-expat",
-        "--with-openssl",
-        "--disable-acl",
+        "--host=#{@host}",    "--disable-bsdtar", "--disable-bsdcat",
+        "--disable-bsdcpio",  "--without-bz2lib", "--without-libb2",
+        "--without-iconv",    "--without-lz4",    "--without-zstd",
+        "--without-lzma",     "--without-cng",    "--without-xml2",
+        "--with-expat",       "--with-openssl",   "--disable-acl"
       ]
     end
 
@@ -60,8 +50,8 @@ module LibarchiveBinary
       if LibarchiveBinary::windows?
         # https://stackoverflow.com/a/14112368/902217
         static_link_pref = "-Wl,-Bstatic,"
-        libz = libz.prepend(static_link_pref)
-        libexpat = libexpat.prepend(static_link_pref)
+        libz.prepend(static_link_pref)
+        libexpat.prepend(static_link_pref)
       end
 
       makefile = File.join(work_path, "Makefile")
@@ -73,9 +63,9 @@ module LibarchiveBinary
     def replace_in_file(search_str, replace_str, filename)
       puts "Replace \"#{search_str}\" with \"#{replace_str}\" in #{filename}"
 
-      f = File.open(filename, "r")
-      content = f.read
-      f.close
+      fc = File.open(filename, "r")
+      content = fc.read
+      fc.close
 
       content.gsub!(search_str, replace_str)
 
