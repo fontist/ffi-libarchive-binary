@@ -26,6 +26,10 @@ module LibarchiveBinary
       @printed = {}
     end
 
+    def darwin?
+      RbConfig::CONFIG['target_os'] =~ /darwin/
+    end
+
     def configure_defaults
       [
         "--host=#{@host}",    "--disable-bsdtar", "--disable-bsdcat",
@@ -133,10 +137,14 @@ module LibarchiveBinary
 
     def lib_filename
       @lib_filename ||=
-        if MiniPortile.windows?
+        if windows?
           "libarchive.dll"
         else
-          "libarchive.so"
+          if darwin?
+            "libarchive.dylib"
+          else
+            "libarchive.so"
+          end
         end
     end
 
@@ -159,7 +167,7 @@ module LibarchiveBinary
         raise "Invalid file format '#{out.strip}', '#{target_format}' expected"
       end
 
-      message("#{lib_workpath} format verified (#{target_format})\n")
+      message("#{lib_workpath} format has been verified (#{target_format})\n")
     end
 
     def target_format
