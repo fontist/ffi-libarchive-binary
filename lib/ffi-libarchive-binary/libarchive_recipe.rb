@@ -5,6 +5,7 @@ require "open3"
 require_relative "zlib_recipe"
 require_relative "libexpat_recipe"
 require_relative "openssl_recipe"
+require_relative "xz_recipe"
 
 module LibarchiveBinary
   class LibarchiveRecipe < MiniPortile
@@ -21,13 +22,10 @@ module LibarchiveBinary
       @zlib_recipe = ZLibRecipe.new
       @expat_recipe = LibexpatRecipe.new
       @openssl_recipe = OpensslRecipe.new
+      @xz_recipe = XZRecipe.new
 
       @target = ROOT.join(@target).to_s
       @printed = {}
-    end
-
-    def darwin?
-      RbConfig::CONFIG['target_os'] =~ /darwin/
     end
 
     def configure_defaults
@@ -35,13 +33,13 @@ module LibarchiveBinary
         "--host=#{@host}",    "--disable-bsdtar", "--disable-bsdcat",
         "--disable-bsdcpio",  "--without-bz2lib", "--without-libb2",
         "--without-iconv",    "--without-lz4",    "--without-zstd",
-        "--without-lzma",     "--without-cng",    "--without-xml2",
+        "--with-lzma",        "--without-cng",    "--without-xml2",
         "--with-expat",       "--with-openssl",   "--disable-acl"
       ]
     end
 
     def configure
-      paths = [@zlib_recipe.path, @expat_recipe.path, @openssl_recipe.path]
+      paths = [@zlib_recipe.path, @expat_recipe.path, @openssl_recipe.path, @xz_recipe.path]
       cflags = paths.map { |k| "-I#{k}/include" }.join(" ")
       cmd = ["env", "CFLAGS=#{cflags}", "./configure"] + computed_options
 
@@ -50,19 +48,22 @@ module LibarchiveBinary
       # drop default libexpat and zlib
       libz = File.join(@zlib_recipe.path, "lib", "libz.a")
       libexpat = File.join(@expat_recipe.path, "lib", "libexpat.a")
-      openssl = File.join(@openssl_recipe.path, "lib", "libcrypto.a")
+      libcrypto = File.join(@openssl_recipe.path, "lib", "libcrypto.a")
+      liblzma = File.join(@xz_recipe.path, "lib", "liblzma.a")
 
       if LibarchiveBinary::windows?
         # https://stackoverflow.com/a/14112368/902217
         static_link_pref = "-Wl,-Bstatic,"
         libz.prepend(static_link_pref)
         libexpat.prepend(static_link_pref)
+        liblzma.prepend(static_link_pref)
       end
 
       makefile = File.join(work_path, "Makefile")
       replace_in_file(" -lz ", " #{libz} ", makefile)
       replace_in_file(" -lexpat ", " #{libexpat} ", makefile)
-      replace_in_file(" -lcrypto ", " #{openssl} ", makefile)
+      replace_in_file(" -lcrypto ", " #{libcrypto} ", makefile)
+      replace_in_file(" -llzma ", " #{liblzma} ", makefile)
     end
 
     def replace_in_file(search_str, replace_str, filename)
@@ -81,6 +82,7 @@ module LibarchiveBinary
       @zlib_recipe.activate
       @expat_recipe.activate
       @openssl_recipe.activate
+      @xz_recipe.activate
 
       super
     end
@@ -98,6 +100,9 @@ module LibarchiveBinary
 
       @openssl_recipe.host = @host if @host
       @openssl_recipe.cook_if_not
+
+      @xz_recipe.host = @host if @host
+      @xz_recipe.cook_if_not
 
       super
 
@@ -137,14 +142,13 @@ module LibarchiveBinary
 
     def lib_filename
       @lib_filename ||=
-        if windows?
+        case RbConfig::CONFIG['target_os']
+        when /darwin/
+          "libarchive.dylib"
+        when /mswin|mingw/
           "libarchive.dll"
         else
-          if darwin?
-            "libarchive.dylib"
-          else
-            "libarchive.so"
-          end
+          "libarchive.so"
         end
     end
 
