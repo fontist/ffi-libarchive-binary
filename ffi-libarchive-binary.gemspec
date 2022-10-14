@@ -3,9 +3,6 @@
 $: << File.expand_path("lib", __dir__)
 require "ffi-libarchive-binary/version"
 
-def add_dependencies(spec)
-end
-
 Gem::Specification.new do |spec|
   spec.name          = "ffi-libarchive-binary"
   spec.version       = LibarchiveBinary::VERSION

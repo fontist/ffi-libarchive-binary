@@ -27,18 +27,22 @@ module LibarchiveBinary
       ]
     end
 
+    def configure_windows
+      mk = File.read("win32/Makefile.gcc")
+      File.open("win32/Makefile.gcc", "wb") do |f|
+        f.puts "BINARY_PATH = #{path}/bin"
+        f.puts "LIBRARY_PATH = #{path}/lib"
+        f.puts "INCLUDE_PATH = #{path}/include"
+        f.puts "SHARED_MODE = 0"
+        f.puts "LOC = -fPIC"
+        f.puts mk
+      end
+    end
+
     def configure
       if LibarchiveBinary::windows?
         Dir.chdir(work_path) do
-          mk = File.read("win32/Makefile.gcc")
-          File.open("win32/Makefile.gcc", "wb") do |f|
-            f.puts "BINARY_PATH = #{path}/bin"
-            f.puts "LIBRARY_PATH = #{path}/lib"
-            f.puts "INCLUDE_PATH = #{path}/include"
-            f.puts "SHARED_MODE = 0"
-            f.puts "LOC = -fPIC"
-            f.puts mk
-          end
+          configure_windows
         end
       else
         cmd = ["env", "CFLAGS=-fPIC", "LDFLAGS=-fPIC",

@@ -172,7 +172,7 @@ jobs:
           echo "gem 'ffi-libarchive-binary', path: 'pkg/ffi-libarchive-binary'" > Gemfile.devel
 
     # https://github.com/rubygems/rubygems/issues/5160
-      - if: matrix.ruby == '3.0' || matrix.os != 'windows-latest'
+      - if: matrix.ruby == '3.0' && matrix.os != 'windows-latest'
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: ${{ matrix.ruby }}
@@ -184,7 +184,7 @@ jobs:
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: ${{ matrix.ruby }}
-          bundler: ${{ env.BUNDLER_VER }}         
+          bundler: ${{ env.BUNDLER_VER }}
           bundler-cache: true
 
       - run: bundle exec rake

@@ -1,5 +1,6 @@
 require "mini_portile2"
 require "pathname"
+require "open3"
 
 require_relative "zlib_recipe"
 require_relative "libexpat_recipe"
@@ -115,8 +116,8 @@ module LibarchiveBinary
 
       libs = Dir.glob(File.join(port_path, "{lib,bin}", "*"))
         .grep(/\/(?:lib)?[a-zA-Z0-9\-]+\.(?:so|dylib|dll)$/)
-      FileUtils.cp_r(libs, ROOT.join("lib", "ffi-libarchive-binary"),
-                     verbose: true)
+      FileUtils.cp_r(libs, lib_workpath, verbose: true)
+      verify_lib
     end
 
     def message(text)
@@ -128,6 +129,55 @@ module LibarchiveBinary
 
       @printed[pattern] = true
       super
+    end
+
+    def lib_filename
+      @lib_filename ||=
+        if MiniPortile.windows?
+          "libarchive.dll"
+        else
+          "libarchive.so"
+        end
+    end
+
+    def lib_workpath
+      @lib_workpath ||= ROOT.join("lib", "ffi-libarchive-binary")
+    end
+
+    def lib_fullpath
+      @lib_fullpath ||= File.join(lib_workpath, lib_filename)
+    end
+
+    def verify_lib
+      begin
+        out, = Open3.capture2("file #{lib_fullpath}")
+      rescue StandardError
+        message("failed to call file, library verification skipped.\n")
+        return
+      end
+      unless out.include?(target_format)
+        raise "Invalid file format '#{out.strip}', '#{target_format}' expected"
+      end
+
+      message("#{lib_workpath} format verified (#{target_format})\n")
+    end
+
+    def target_format
+      @target_format ||=
+        case @host
+        when "arm64-darwin"
+          "Mach-O 64-bit dynamically linked shared library arm64"
+        when "x86_64-darwin"
+          "Mach-O 64-bit dynamically linked shared library x86_64"
+        when "aarch64-linux-gnu"
+          "ELF 64-bit LSB shared object, ARM aarch64"
+        when "x86_64-linux-gnu"
+          "ELF 64-bit LSB shared object, x86-64"
+        when "x86_64-w64-mingw32"
+          "PE32+ executable (DLL) (console) x86-64, for MS Windows"
+        else
+          "skip"
+        end
     end
   end
 end
