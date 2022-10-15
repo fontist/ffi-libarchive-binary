@@ -86,8 +86,6 @@ jobs:
           gem unpack ffi-libarchive-binary-*.gem
           ls */lib/ffi-libarchive-binary
 
-      - run: gem specification pkg/ffi-libarchive-binary-*.gem
-
       - uses: actions/upload-artifact@v3
         with:
           name: pkg

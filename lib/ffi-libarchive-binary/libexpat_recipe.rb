@@ -1,16 +1,16 @@
-require "mini_portile2"
+require_relative "base_recipe"
 
 module LibarchiveBinary
   # based on
-  class LibexpatRecipe < MiniPortile
+  class LibexpatRecipe < BaseRecipe
     ROOT = Pathname.new(File.expand_path("../..", __dir__))
 
     def initialize
       super("libexpat", "2.4.9")
 
       @files << {
-        url: "https://github.com/libexpat/libexpat/releases/download/R_2_4_9/expat-2.4.9.tar.gz", # rubocop:disable Layout/LineLength
-        sha256: "4415710268555b32c4e5ab06a583bea9fec8ff89333b218b70b43d4ca10e38fa",               # rubocop:disable Layout/LineLength
+        url: "https://github.com/libexpat/libexpat/releases/download/R_2_4_9/expat-2.4.9.tar.gz",
+        sha256: "4415710268555b32c4e5ab06a583bea9fec8ff89333b218b70b43d4ca10e38fa",
       }
 
       @target = ROOT.join(@target).to_s
@@ -18,14 +18,13 @@ module LibarchiveBinary
 
     def configure_defaults
       [
-        "--host=#{@host}",
-        "--disable-shared",
-        "--enable-static",
+        "--host=#{@host}",        "--disable-shared", "--enable-static",
+        "--without-tests",        "--without-examples"
       ]
     end
 
     def configure
-      cmd = ["env", "CFLAGS=-fPIC", "LDFLAGS=-fPIC",
+      cmd = ["env", cflags(host), ldflags(host),
              "./configure"] + computed_options
       execute("configure", cmd)
     end

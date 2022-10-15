@@ -17,7 +17,6 @@ RSpec.describe do
   it "unarchives 7z self-extracing archive with no error" do
     Dir.mktmpdir do |target|
       unarchive(exe_7z, target)
-
       expect(Pathname.new(File.join(target, "Fonts", "Marlett.ttf"))).to exist
     end
   end

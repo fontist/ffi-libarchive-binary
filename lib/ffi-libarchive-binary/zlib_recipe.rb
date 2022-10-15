@@ -1,21 +1,17 @@
-require "mini_portile2"
 require "pathname"
+require_relative "base_recipe"
 
 module LibarchiveBinary
-  def self.windows?
-    RbConfig::CONFIG["target_os"] =~ /mingw32|mswin/
-  end
-
   # inspired by https://github.com/sparklemotion/nokogiri/blob/35823bd/ext/nokogiri/extconf.rb#L655
-  class ZLibRecipe < MiniPortile
+  class ZLibRecipe < BaseRecipe
     ROOT = Pathname.new(File.expand_path("../..", __dir__))
 
     def initialize
       super("zlib", "1.2.11")
 
       @files << {
-        url: "http://zlib.net/fossils/zlib-1.2.11.tar.gz",                          # rubocop:disable Layout/LineLength
-        sha256: "c3e5e9fdd5004dcb542feda5ee4f0ff0744628baf8ed2dd5d66f8ca1197cb1a1", # rubocop:disable Layout/LineLength
+        url: "http://zlib.net/fossils/zlib-1.2.11.tar.gz",
+        sha256: "c3e5e9fdd5004dcb542feda5ee4f0ff0744628baf8ed2dd5d66f8ca1197cb1a1",
       }
 
       @target = ROOT.join(@target).to_s
@@ -40,19 +36,19 @@ module LibarchiveBinary
     end
 
     def configure
-      if LibarchiveBinary::windows?
+      if MiniPortile::windows?
         Dir.chdir(work_path) do
           configure_windows
         end
       else
-        cmd = ["env", "CFLAGS=-fPIC", "LDFLAGS=-fPIC",
+        cmd = ["env", cflags(host), ldflags(host),
                "./configure"] + computed_options
         execute("configure", cmd)
       end
     end
 
     def configured?
-      if LibarchiveBinary::windows?
+      if MiniPortile::windows?
         Dir.chdir(work_path) do
           !!(File.read("win32/Makefile.gcc") =~ /^BINARY_PATH/)
         end
@@ -62,7 +58,7 @@ module LibarchiveBinary
     end
 
     def compile
-      if LibarchiveBinary::windows?
+      if MiniPortile::windows?
         execute("compile", "make -f win32/Makefile.gcc libz.a")
       else
         super
@@ -70,7 +66,7 @@ module LibarchiveBinary
     end
 
     def install
-      if LibarchiveBinary::windows?
+      if MiniPortile::windows?
         execute("install", "make -f win32/Makefile.gcc install")
       else
         super
