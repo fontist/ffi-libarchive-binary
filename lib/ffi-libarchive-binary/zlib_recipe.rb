@@ -1,8 +1,9 @@
+# frozen_string_literal: true
+
 require "pathname"
 require_relative "base_recipe"
 
 module LibarchiveBinary
-  # inspired by https://github.com/sparklemotion/nokogiri/blob/35823bd/ext/nokogiri/extconf.rb#L655
   class ZLibRecipe < BaseRecipe
     ROOT = Pathname.new(File.expand_path("../..", __dir__))
 

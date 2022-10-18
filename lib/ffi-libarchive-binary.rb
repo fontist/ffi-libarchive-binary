@@ -14,7 +14,7 @@ module LibarchiveBinary
 
   def self.lib_filename
     if FFI::Platform.windows?
-      "libarchive-13.dll"
+      "libarchive.dll"
     elsif FFI::Platform.mac?
       "libarchive.dylib"
     else

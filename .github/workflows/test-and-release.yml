@@ -55,17 +55,12 @@ jobs:
           bundler: ${{ env.BUNDLER_VER }}
           bundler-cache: true
 
-      - uses: actions/cache@v3
-        with:
-          path: ports/archives
-          key: ports_archives
-          restore-keys: ports_archivesr
-
       - if: matrix.platform == 'aarch64-linux'
         name: Install aarch64 compilers
         run: |
           sudo apt-get update
           sudo apt-get install gcc-aarch64-linux-gnu g++-aarch64-linux-gnu binutils-aarch64-linux-gnu gperf
+          echo "CMAKE_TOOLCHAIN_FILE=$(pwd)/toolchain/aarch64-linux-gnu.cmake" >> $GITHUB_ENV
 
       - run: bundle exec rake gem:native:${{ matrix.platform }}
 

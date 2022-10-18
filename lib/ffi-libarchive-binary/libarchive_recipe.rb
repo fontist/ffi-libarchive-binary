@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "pathname"
 require "open3"
 
@@ -8,21 +10,12 @@ require_relative "openssl_recipe"
 require_relative "xz_recipe"
 
 module LibarchiveBinary
-  FORMATS = {
-    "arm64-apple-darwin" => "Mach-O 64-bit dynamically linked shared library arm64",
-    "x86_64-apple-darwin" => "Mach-O 64-bit dynamically linked shared library x86_64",
-    "aarch64-linux-gnu" => "ELF 64-bit LSB shared object, ARM aarch64",
-    "x86_64-linux-gnu" => "ELF 64-bit LSB shared object, x86-64",
-    "x86_64-w64-mingw32" => "PE32+ executable (DLL) (console) x86-64, for MS Windows",
-  }.freeze
-
-  class LibarchiveRecipe < BaseRecipe
+  class LibarchiveRecipe < MiniPortileCMake
     ROOT = Pathname.new(File.expand_path("../..", __dir__))
-
-    attr_accessor :lib_filename
 
     def initialize
       super("libarchive", "3.6.1")
+      @printed = {}
 
       @files << {
         url: "https://www.libarchive.org/downloads/libarchive-3.6.1.tar.gz",
@@ -41,71 +34,41 @@ module LibarchiveBinary
       @xz_recipe = XZRecipe.new
     end
 
-    def configure_defaults
+    def generator_flags
+      MiniPortile::mingw? ? ["-G", "MSYS Makefiles"] : []
+    end
+
+    def default_flags
       [
-        "--host=#{@host}",    "--disable-bsdtar", "--disable-bsdcat",
-        "--disable-bsdcpio",  "--without-bz2lib", "--without-libb2",
-        "--without-iconv",    "--without-lz4",    "--without-zstd",
-        "--with-lzma",        "--without-cng",    "--without-xml2",
-        "--with-expat",       "--with-openssl",   "--disable-acl"
+        "-DENABLE_OPENSSL:BOOL=ON", "-DENABLE_LIBB2:BOOL=OFF", "-DENABLE_LZ4:BOOL=OFF",
+        "-DENABLE_LZO::BOOL=OFF",     "-DENABLE_LZMA:BOOL=ON",        "-DENABLE_ZSTD:BOOL=OFF",
+        "-DENABLE_ZLIB::BOOL=ON",     "-DENABLE_BZip2:BOOL=OFF",      "-DENABLE_LIBXML2:BOOL=OFF",
+        "-DENABLE_EXPAT::BOOL=ON",    "-DENABLE_TAR:BOOL=OFF",        "-DENABLE_ICONV::BOOL=OFF",
+        "-DENABLE_CPIO::BOOL=OFF",    "-DENABLE_CAT:BOOL=OFF",        "-DENABLE_ACL:BOOL=OFF",
+        "-DENABLE_TEST:BOOL=OFF",
+        "-DCMAKE_INCLUDE_PATH=#{include_path}",
+        "-DCMAKE_LIBRARY_PATH=#{library_path}"
       ]
     end
 
-    def configure
-      fl = apple_arch_flag(host)
-      cmd = ["env", "CFLAGS=#{include_flags} #{fl}", "LDFLAGS=#{fl}",
-             "./configure"] + computed_options
-      execute("configure", cmd)
-
-      if MiniPortile::windows?
-        patch_makefile_windows
+    def configure_defaults
+      df = generator_flags + default_flags
+      ar = ARCHS[host]
+      if ar.nil?
+        df
       else
-        patch_makefile
+        df + ["-DCMAKE_OSX_ARCHITECTURES=#{ar}"]
       end
     end
 
-    def include_flags
-      paths = [@zlib_recipe.path, @expat_recipe.path, @openssl_recipe.path]
-      paths.map { |k| "-I#{k}/include" }.join(" ")
+    def include_path
+      paths = [@zlib_recipe.path, @expat_recipe.path, @openssl_recipe.path, @xz_recipe.path]
+      paths.map { |k| "#{k}/include" }.join(";")
     end
 
-    def patch_makefile_windows
-      llibz = File.join(@zlib_recipe.path, "lib")
-      llibexpat = File.join(@expat_recipe.path, "lib")
-      llibcrypto = File.join(@openssl_recipe.path, "lib")
-      lliblzma = File.join(@xz_recipe.path, "lib")
-
-      makefile = File.join(work_path, "Makefile")
-      replace_in_file(" -lz ", " -L#{llibz} -Wl,-Bstatic,-lz ", makefile)
-      replace_in_file(" -lexpat ", " -L#{llibexpat}  -Wl,-Bstatic,-lexpat ", makefile)
-      replace_in_file(" -lcrypto ", " -L#{llibcrypto} -Wl,-Bstatic,-lcrypto ", makefile)
-      replace_in_file(" -llzma ", " -L#{lliblzma} -Wl,-Bstatic,-llzma ", makefile)
-    end
-
-    def patch_makefile
-      libz = File.join(@zlib_recipe.path, "lib", "libz.a")
-      libexpat = File.join(@expat_recipe.path, "lib", "libexpat.a")
-      libcrypto = File.join(@openssl_recipe.path, "lib", "libcrypto.a")
-      liblzma = File.join(@xz_recipe.path, "lib", "liblzma.a")
-      lliblzma = File.join(@xz_recipe.path, "lib")
-
-      makefile = File.join(work_path, "Makefile")
-      replace_in_file(" -lz ", " #{libz} ", makefile)
-      replace_in_file(" -lexpat ", " #{libexpat} ", makefile)
-      replace_in_file(" -lcrypto ", " #{libcrypto} ", makefile)
-      replace_in_file(" -llzma ", " -L#{lliblzma} -l:liblzma.a ", makefile)  # #{liblzma}
-    end
-
-    def replace_in_file(search_str, replace_str, filename)
-      puts "Replacing \"#{search_str}\" with \"#{replace_str}\" in #{filename}"
-
-      fc = File.open(filename, "r")
-      content = fc.read
-      fc.close
-
-      content.gsub!(search_str, replace_str)
-
-      File.open(filename, "w") { |f| f << content }
+    def library_path
+      paths = [@zlib_recipe.path, @expat_recipe.path, @openssl_recipe.path, @xz_recipe.path]
+      paths.map { |k| "#{k}/lib" }.join(";")
     end
 
     def activate
@@ -143,20 +106,17 @@ module LibarchiveBinary
       File.join(@target, "#{name}-#{version}-#{host}.installed")
     end
 
-    def patch
-      super
-
-      FileUtils.cp(Dir.glob(ROOT.join("updates", "config.*").to_s),
-                   File.join(work_path, "build", "autoconf"))
-    end
-
     def install
       super
 
       libs = Dir.glob(File.join(port_path, "{lib,bin}", "*"))
         .grep(/\/(?:lib)?[a-zA-Z0-9\-]+\.(?:so|dylib|dll)$/)
       FileUtils.cp_r(libs, lib_workpath, verbose: true)
-      verify_lib
+      if lib_fullpath.nil?
+        message("Cannot guess libarchive library name, skipping format verification")
+      else
+        verify_lib
+      end
     end
 
     def lib_workpath
@@ -164,7 +124,8 @@ module LibarchiveBinary
     end
 
     def lib_fullpath
-      @lib_fullpath ||= File.join(lib_workpath, lib_filename)
+      lib_filename = LIBNAMES[@host]
+      @lib_fullpath ||= lib_filename.nil? ? nil : File.join(lib_workpath, lib_filename)
     end
 
     def verify_lib
@@ -183,6 +144,17 @@ module LibarchiveBinary
 
     def target_format
       @target_format ||= FORMATS[@host].nil? ? "skip" : FORMATS[@host]
+    end
+
+    def message(text)
+      return super unless text.start_with?("\rDownloading")
+
+      match = text.match(/(\rDownloading .*)\((\s*)(\d+)%\)/)
+      pattern = match ? match[1] : text
+      return if @printed[pattern] && match[3].to_i != 100
+
+      @printed[pattern] = true
+      super
     end
   end
 end

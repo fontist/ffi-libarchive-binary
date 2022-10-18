@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "rbconfig"
 require "rake/clean"
 require "rubygems/package_task"
 require_relative "lib/ffi-libarchive-binary/libarchive_recipe"
@@ -26,25 +27,25 @@ task "platform:any" do
 end
 
 platforms = [
-  ["x64-mingw32", "x86_64-w64-mingw32", "libarchive-13.dll"],
-  ["x64-mingw-ucrt", "x86_64-w64-mingw32", "libarchive-13.dll"],
-  ["x86_64-linux", "x86_64-linux-gnu", "libarchive.so"],
-  ["aarch64-linux", "aarch64-linux-gnu", "libarchive.so"],
-  ["x86_64-darwin", "x86_64-apple-darwin", "libarchive.dylib"],
-  ["arm64-darwin", "arm64-apple-darwin", "libarchive.dylib"],
+  ["x64-mingw32", "x86_64-w64-mingw32"],
+  ["x64-mingw-ucrt", "x86_64-w64-mingw32"],
+  ["x86_64-linux", "x86_64-linux-gnu"],
+  ["aarch64-linux", "aarch64-linux-gnu"],
+  ["x86_64-darwin", "x86_64-apple-darwin"],
+  ["arm64-darwin", "arm64-apple-darwin"],
 ]
 
-platforms.each do |platform, host, lib|
+platforms.each do |platform, host|
   desc "Build pre-compiled gem for the #{platform} platform"
   task "gem:native:#{platform}" do
-    sh "rake compile[#{host},#{lib}] platform:#{platform} gem"
+    sh "rake compile[#{host}] platform:#{platform} gem"
   end
 
   desc "Define the gem task to build on the #{platform} platform (binary gem)"
   task "platform:#{platform}" do
     spec = Gem::Specification::load("ffi-libarchive-binary.gemspec").dup
     spec.platform = Gem::Platform.new(platform)
-    spec.files += ["lib/ffi-libarchive-binary/#{lib}"]
+    spec.files += Dir.glob("lib/ffi-libarchive-binary/*.{dll,so,dylib}")
     spec.extensions = []
     spec.dependencies.reject! { |d| d.name == "mini_portile2" }
 
@@ -54,17 +55,15 @@ platforms.each do |platform, host, lib|
 end
 
 desc "Compile binary for the target host"
-task :compile, [:host, :lib] do |_t, args|
+task :compile, [:host] do |_t, args|
   recipe = LibarchiveBinary::LibarchiveRecipe.new
-  recipe.host = args[:host] if args[:host]
-  recipe.lib_filename = args[:lib] if args[:lib]
+  if args[:host]
+    recipe.host = args[:host]
+  else
+    recipe.host = "x86_64-apple-darwin" if /x86_64-apple-darwin*/.match?(recipe.host)
+    recipe.host = "arm64-apple-darwin" if /arm64-apple-darwin*/.match?(recipe.host)
+  end
   recipe.cook_if_not
-end
-
-desc "Recompile binary"
-task :recompile do
-  recipe = LibarchiveBinary::LibarchiveRecipe.new
-  recipe.cook
 end
 
 CLOBBER.include("pkg")

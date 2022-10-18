@@ -1,7 +1,8 @@
+# frozen_string_literal: true
+
 require_relative "base_recipe"
 
 module LibarchiveBinary
-  # based on
   class LibexpatRecipe < BaseRecipe
     ROOT = Pathname.new(File.expand_path("../..", __dir__))
 
