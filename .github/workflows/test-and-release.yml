@@ -12,7 +12,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  BUNDLER_VER: 2.3.22
+  BUNDLER_VER: 2.3.24
 # Forcing bundler version to ensure that it is consistent everywhere and
 # does not cause bundler gem reinstalls
 # bundler/rubygems 2.3.22 is a minimal requirement to support gnu/musl differentiation
@@ -164,8 +164,8 @@ jobs:
           mv pkg/ffi-libarchive-binary-*-${{ matrix.platform }} pkg/ffi-libarchive-binary
           echo "gem 'ffi-libarchive-binary', path: 'pkg/ffi-libarchive-binary'" > Gemfile.devel
 
-    # https://github.com/rubygems/rubygems/issues/5160
-      - if: matrix.ruby == '3.0' && matrix.os != 'windows-latest'
+      # https://github.com/rubygems/rubygems/issues/5160
+      - if: matrix.ruby == '3.0'
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: ${{ matrix.ruby }}
@@ -173,7 +173,7 @@ jobs:
           bundler: ${{ env.BUNDLER_VER }}
           rubygems: latest
 
-      - if: matrix.ruby != '3.0' || matrix.os == 'windows-latest'
+      - if: matrix.ruby != '3.0'
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: ${{ matrix.ruby }}
