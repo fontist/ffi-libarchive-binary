@@ -1,10 +1,22 @@
-name: tests
+name: test-and-release
 
 on:
   push:
-    branches: [ master ]
+    branches: [ main ]
+    tags:     [ 'v*' ]
   pull_request:
   workflow_dispatch:
+
+concurrency:
+  group: '${{ github.workflow }}-${{ github.job }}-${{ github.head_ref || github.ref_name }}'
+  cancel-in-progress: true
+
+env:
+  BUNDLER_VER: 2.3.24
+# Forcing bundler version to ensure that it is consistent everywhere and
+# does not cause bundler gem reinstalls
+# bundler/rubygems 2.3.22 is a minimal requirement to support gnu/musl differentiation
+# https://github.com/rubygems/rubygems/pull/4488
 
 jobs:
   pack:
@@ -13,9 +25,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: windows-latest
-            platform: x86-mingw32
-            ruby: '2.7'
           - os: windows-latest
             platform: x64-mingw32
             ruby: '2.7'
@@ -29,40 +38,39 @@ jobs:
             platform: arm64-darwin
             ruby: '2.7'
           - os: ubuntu-latest
-            platform: x86-linux
+            platform: x86_64-linux
             ruby: '2.7'
           - os: ubuntu-latest
-            platform: x86_64-linux
+            platform: aarch64-linux
             ruby: '2.7'
           - os: ubuntu-latest
             platform: any
             ruby: '2.7'
-    concurrency:
-      group: '${{ github.workflow }}-${{ github.job }}-${{ matrix.os }}-${{ matrix.ruby }}-${{ matrix.platform }}-${{ github.head_ref || github.ref_name }}'
-      cancel-in-progress: true
     steps:
       - uses: actions/checkout@v3
 
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: ${{ matrix.ruby }}
+          bundler: ${{ env.BUNDLER_VER }}
           bundler-cache: true
 
-      - uses: actions/cache@v2
-        with:
-          path: ports/archives
-          key: ports_archives
-          restore-keys: ports_archives
+      - if: matrix.platform == 'aarch64-linux'
+        name: Install aarch64 compilers
+        run: |
+          sudo apt-get update
+          sudo apt-get install gcc-aarch64-linux-gnu g++-aarch64-linux-gnu binutils-aarch64-linux-gnu gperf
+          echo "CMAKE_TOOLCHAIN_FILE=$(pwd)/toolchain/aarch64-linux-gnu.cmake" >> $GITHUB_ENV
 
       - run: bundle exec rake gem:native:${{ matrix.platform }}
 
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         if: failure()
         with:
           name: build-logs-${{ matrix.platform }}
           path: tmp/*/ports/*/*/*.log
 
-      - if: matrix.platform != 'any'
+      - if: matrix.platform != 'any' && matrix.platform != 'aarch64-linux'
         uses: metanorma/metanorma-build-scripts/native-deps-action@main
         with:
           libname: archive
@@ -73,19 +81,16 @@ jobs:
           gem unpack ffi-libarchive-binary-*.gem
           ls */lib/ffi-libarchive-binary
 
-      - run: gem specification pkg/ffi-libarchive-binary-*.gem
-
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         with:
           name: pkg
           path: pkg/*.gem
 
       - if: matrix.platform != 'any'
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: lib-${{ matrix.platform }}
-          path: |
-            lib/ffi-libarchive-binary/libarchive*
+          path: lib/ffi-libarchive-binary/libarchive*
 
   test:
     needs: pack
@@ -102,18 +107,16 @@ jobs:
             platform: x86_64-darwin
           - os: ubuntu-latest
             platform: x86_64-linux
-    concurrency:
-      group: '${{ github.workflow }}-${{ github.job }}-${{ matrix.os }}-${{ matrix.ruby }}-${{ matrix.platform }}-${{ github.head_ref || github.ref_name }}'
-      cancel-in-progress: true
     steps:
       - uses: actions/checkout@v3
 
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: ${{ matrix.ruby }}
+          bundler: ${{ env.BUNDLER_VER }}
           bundler-cache: true
 
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@v3
         with:
           name: lib-${{ matrix.platform }}
           path: lib/ffi-libarchive-binary
@@ -143,15 +146,14 @@ jobs:
             platform: x86_64-darwin
           - os: ubuntu-latest
             platform: x86_64-linux
-    concurrency:
-      group: '${{ github.workflow }}-${{ github.job }}-${{ matrix.os }}-${{ matrix.ruby }}-${{ matrix.platform }}-${{ github.head_ref || github.ref_name }}'
-      cancel-in-progress: true
     steps:
       - uses: actions/checkout@v3
         with:
           repository: metanorma/metanorma
 
-      - uses: actions/download-artifact@v2
+      - uses: metanorma/metanorma-build-scripts/inkscape-setup-action@main
+
+      - uses: actions/download-artifact@v3
         with:
           name: pkg
           path: pkg
@@ -168,14 +170,45 @@ jobs:
         with:
           ruby-version: ${{ matrix.ruby }}
           bundler-cache: true
+          bundler: ${{ env.BUNDLER_VER }}
           rubygems: latest
 
       - if: matrix.ruby != '3.0'
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: ${{ matrix.ruby }}
+          bundler: ${{ env.BUNDLER_VER }}
           bundler-cache: true
 
-      - uses: metanorma/metanorma-build-scripts/inkscape-setup-action@main
-
       - run: bundle exec rake
+
+# ----- Release -----
+  release:
+    name: Release gem
+    needs: [ pack, test, metanorma ]
+    runs-on: ubuntu-latest
+    if: contains(github.ref, 'refs/tags/v')
+    steps:
+    - uses: actions/checkout@v3
+
+    - uses: actions/download-artifact@v3
+      with:
+        name: pkg
+        path: pkg
+
+    - name: Publish to rubygems.org
+      env:
+        RUBYGEMS_API_KEY: ${{secrets.FONTIST_CI_RUBYGEMS_API_KEY}}
+      run: |
+        mkdir -p ~/.gem
+        touch ~/.gem/credentials
+        cat > ~/.gem/credentials << EOF
+        ---
+        :rubygems_api_key: ${RUBYGEMS_API_KEY}
+        EOF
+        chmod 0600 ~/.gem/credentials
+        gem signin
+        mkdir tmp
+        for gem in pkg/*.gem; do gem push -V $gem; done
+
+#        for gem in pkg/*.gem; do echo "Will do: 'gem push -V $gem'"; done

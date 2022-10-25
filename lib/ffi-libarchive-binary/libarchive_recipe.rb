@@ -1,85 +1,81 @@
-require "mini_portile2"
-require "pathname"
+# frozen_string_literal: true
 
+require "pathname"
+require "open3"
+
+require_relative "base_recipe"
 require_relative "zlib_recipe"
 require_relative "libexpat_recipe"
+require_relative "openssl_recipe"
+require_relative "xz_recipe"
 
 module LibarchiveBinary
-  class LibarchiveRecipe < MiniPortile
+  class LibarchiveRecipe < MiniPortileCMake
     ROOT = Pathname.new(File.expand_path("../..", __dir__))
 
     def initialize
-      super("libarchive", "3.5.1")
+      super("libarchive", "3.6.1")
+      @printed = {}
 
       @files << {
-        url: "https://www.libarchive.org/downloads/libarchive-3.5.1.tar.gz",
-        sha256: "9015d109ec00bb9ae1a384b172bf2fc1dff41e2c66e5a9eeddf933af9db37f5a"
+        url: "https://www.libarchive.org/downloads/libarchive-3.6.1.tar.gz",
+        sha256: "c676146577d989189940f1959d9e3980d28513d74eedfbc6b7f15ea45fe54ee2",
       }
 
-      @zlib_recipe = ZLibRecipe.new
-      @expat_recipe = LibexpatRecipe.new
-
       @target = ROOT.join(@target).to_s
+
+      create_dependencies
     end
 
-    def configure_defaults
+    def create_dependencies
+      @zlib_recipe = ZLibRecipe.new
+      @expat_recipe = LibexpatRecipe.new
+      @openssl_recipe = OpensslRecipe.new
+      @xz_recipe = XZRecipe.new
+    end
+
+    def generator_flags
+      MiniPortile::mingw? ? ["-G", "MSYS Makefiles"] : []
+    end
+
+    def default_flags
       [
-        "--host=#{@host}",
-        "--disable-bsdtar",
-        "--disable-bsdcat",
-        "--disable-bsdcpio",
-        "--without-bz2lib",
-        "--without-libb2",
-        "--without-iconv",
-        "--without-lz4",
-        "--without-zstd",
-        "--without-lzma",
-        "--without-cng",
-        "--without-xml2",
-        "--with-expat",
-        "--with-openssl",
-        "--disable-acl",
+        "-DENABLE_OPENSSL:BOOL=ON", "-DENABLE_LIBB2:BOOL=OFF", "-DENABLE_LZ4:BOOL=OFF",
+        "-DENABLE_LZO::BOOL=OFF",     "-DENABLE_LZMA:BOOL=ON",        "-DENABLE_ZSTD:BOOL=OFF",
+        "-DENABLE_ZLIB::BOOL=ON",     "-DENABLE_BZip2:BOOL=OFF",      "-DENABLE_LIBXML2:BOOL=OFF",
+        "-DENABLE_EXPAT::BOOL=ON",    "-DENABLE_TAR:BOOL=OFF",        "-DENABLE_ICONV::BOOL=OFF",
+        "-DENABLE_CPIO::BOOL=OFF",    "-DENABLE_CAT:BOOL=OFF",        "-DENABLE_ACL:BOOL=OFF",
+        "-DENABLE_TEST:BOOL=OFF",
+        "-DCMAKE_INCLUDE_PATH=#{include_path}",
+        "-DCMAKE_LIBRARY_PATH=#{library_path}"
       ]
     end
 
-    def configure
-      paths = [@zlib_recipe.path, @expat_recipe.path]
-      cflags = paths.map { |k| "-I#{k}/include" }.join(" ")
-      cmd = ["env", "CFLAGS=#{cflags}", "./configure"] + computed_options
-
-      execute("configure", cmd)
-
-      # drop default libexpat and zlib
-      libz = File.join(@zlib_recipe.path, "lib", "libz.a")
-      libexpat = File.join(@expat_recipe.path, "lib", "libexpat.a")
-
-      if LibarchiveBinary::windows?
-        # https://stackoverflow.com/a/14112368/902217
-        static_link_pref = "-Wl,-Bstatic,"
-        libz = libz.prepend(static_link_pref)
-        libexpat = libexpat.prepend(static_link_pref)
+    def configure_defaults
+      df = generator_flags + default_flags
+      ar = ARCHS[host]
+      if ar.nil?
+        df
+      else
+        df + ["-DCMAKE_OSX_ARCHITECTURES=#{ar}"]
       end
-
-      makefile = File.join(work_path, "Makefile")
-      replace_in_file(" -lz ", " #{libz} ", makefile)
-      replace_in_file(" -lexpat ", " #{libexpat} ", makefile)
     end
 
-    def replace_in_file(search_str, replace_str, filename)
-      puts "Replace \"#{search_str}\" with \"#{replace_str}\" in #{filename}"
+    def include_path
+      paths = [@zlib_recipe.path, @expat_recipe.path, @openssl_recipe.path, @xz_recipe.path]
+      paths.map { |k| "#{k}/include" }.join(";")
+    end
 
-      f = File.open(filename, "r")
-      content = f.read
-      f.close
-
-      content.gsub!(search_str, replace_str)
-
-      File.open(filename, "w") { |f| f << content }
+    def library_path
+      paths = [@zlib_recipe.path, @expat_recipe.path, @openssl_recipe.path, @xz_recipe.path]
+      paths.map { |k| "#{k}/lib" }.join(";")
     end
 
     def activate
       @zlib_recipe.activate
       @expat_recipe.activate
+      @openssl_recipe.activate
+      @xz_recipe.activate
 
       super
     end
@@ -89,8 +85,17 @@ module LibarchiveBinary
     end
 
     def cook
+      @zlib_recipe.host = @host if @host
       @zlib_recipe.cook_if_not
+
+      @expat_recipe.host = @host if @host
       @expat_recipe.cook_if_not
+
+      @openssl_recipe.host = @host if @host
+      @openssl_recipe.cook_if_not
+
+      @xz_recipe.host = @host if @host
+      @xz_recipe.cook_if_not
 
       super
 
@@ -98,14 +103,7 @@ module LibarchiveBinary
     end
 
     def checkpoint
-      File.join(@target, "#{self.name}-#{self.version}-#{self.host}.installed")
-    end
-
-    def patch
-      super
-
-      FileUtils.cp(Dir.glob(ROOT.join("updates", "config.*").to_s),
-                   File.join(work_path, "build", "autoconf"))
+      File.join(@target, "#{name}-#{version}-#{host}.installed")
     end
 
     def install
@@ -113,7 +111,50 @@ module LibarchiveBinary
 
       libs = Dir.glob(File.join(port_path, "{lib,bin}", "*"))
         .grep(/\/(?:lib)?[a-zA-Z0-9\-]+\.(?:so|dylib|dll)$/)
-      FileUtils.cp_r(libs, ROOT.join("lib", "ffi-libarchive-binary"), verbose: true)
+      FileUtils.cp_r(libs, lib_workpath, verbose: true)
+      if lib_fullpath.nil?
+        message("Cannot guess libarchive library name, skipping format verification")
+      else
+        verify_lib
+      end
+    end
+
+    def lib_workpath
+      @lib_workpath ||= ROOT.join("lib", "ffi-libarchive-binary")
+    end
+
+    def lib_fullpath
+      lib_filename = LIBNAMES[@host]
+      @lib_fullpath ||= lib_filename.nil? ? nil : File.join(lib_workpath, lib_filename)
+    end
+
+    def verify_lib
+      begin
+        out, = Open3.capture2("file #{lib_fullpath}")
+      rescue StandardError
+        message("failed to call file, library verification skipped.\n")
+        return
+      end
+      unless out.include?(target_format)
+        raise "Invalid file format '#{out.strip}', '#{target_format}' expected"
+      end
+
+      message("#{lib_fullpath} format has been verified (#{target_format})\n")
+    end
+
+    def target_format
+      @target_format ||= FORMATS[@host].nil? ? "skip" : FORMATS[@host]
+    end
+
+    def message(text)
+      return super unless text.start_with?("\rDownloading")
+
+      match = text.match(/(\rDownloading .*)\((\s*)(\d+)%\)/)
+      pattern = match ? match[1] : text
+      return if @printed[pattern] && match[3].to_i != 100
+
+      @printed[pattern] = true
+      super
     end
   end
 end

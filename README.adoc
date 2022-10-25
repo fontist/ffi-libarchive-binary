@@ -51,16 +51,6 @@ end
 reader.close
 ----
 
-
-== Dependencies
-
-* zlib
-* Expat
-* OpenSSL (for Linux only)
-
-These dependencies are generally present on all systems.
-
-
 == Development
 
 We are following Sandi Metz's Rules for this gem, you can read the
@@ -68,26 +58,6 @@ http://robots.thoughtbot.com/post/50655960596/sandi-metz-rules-for-developers[de
 All new code should follow these
 rules. If you make changes in a pre-existing file that violates these rules you
 should fix the violations as part of your contribution.
-
-
-== Releasing
-
-Releasing is done automatically with GitHub Action. Just bump and tag with `gem-release`.
-
-For a patch release (0.0.x) use:
-
-[source,ruby]
-----
-gem bump --version patch --tag --push
-----
-
-For a minor release (0.x.0) use:
-
-[source,ruby]
-----
-gem bump --version minor --tag --push
-----
-
 
 == Contributing
 

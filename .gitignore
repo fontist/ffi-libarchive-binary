@@ -13,3 +13,7 @@ vendor/
 *.dll
 *.dylib
 *.so
+/.vscode/
+
+# remote file cache
+.rubocop-*

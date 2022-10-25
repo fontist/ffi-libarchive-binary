@@ -1,0 +1,17 @@
+inherit_from:
+  - 'https://raw.githubusercontent.com/riboseinc/oss-guides/master/ci/rubocop.yml'
+
+AllCops:
+  TargetRubyVersion: 2.7
+  SuggestExtensions: false
+  Exclude:
+    - 'ffi-libarchive-binary.gemspec'
+    - 'tmp/**/*'
+    - 'pkg/**/*'
+    - 'ports/**/*'
+
+Gemspec/RequireMFA:
+  Enabled: false
+
+Layout/LineLength:
+  Max: 160
