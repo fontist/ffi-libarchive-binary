@@ -168,7 +168,7 @@ jobs:
           echo "gem 'ffi-libarchive-binary', path: 'pkg/ffi-libarchive-binary'" > Gemfile.devel
 
       # https://github.com/rubygems/rubygems/issues/5160
-      - if: matrix.ruby == '3.0' || matrix.ruby == '2.6'
+      - if: matrix.ruby == '3.0'
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: ${{ matrix.ruby }}
@@ -181,7 +181,9 @@ jobs:
         with:
           ruby-version: ${{ matrix.ruby }}
           bundler: ${{ env.BUNDLER_VER }}
-          bundler-cache: true
+          bundler-cache: false
+
+      - run: bundle install
 
       - run: bundle exec rake
 
