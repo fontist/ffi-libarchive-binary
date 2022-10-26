@@ -176,16 +176,24 @@ jobs:
           bundler: ${{ env.BUNDLER_VER }}
           rubygems: latest
 
-      - if: matrix.ruby != '3.0'
+      - if: matrix.ruby != '3.0' && matrix.ruby != '2.6'
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: ${{ matrix.ruby }}
+          bundler: ${{ env.BUNDLER_VER }}
           bundler-cache: true
 
-#          bundler: ${{ env.BUNDLER_VER }}
+      - if: matrix.ruby == '2.6'
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby }}
+          bundler: ${{ env.BUNDLER_VER }}
+          bundler-cache: false
 
-
-      - run: bundle install
+      - if: matrix.ruby == '2.6'
+        run: |
+          gem install metanorma-iso
+          bundle install
 
       - run: bundle exec rake
 
