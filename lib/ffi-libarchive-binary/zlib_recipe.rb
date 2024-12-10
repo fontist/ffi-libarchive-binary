@@ -8,11 +8,11 @@ module LibarchiveBinary
     ROOT = Pathname.new(File.expand_path("../..", __dir__))
 
     def initialize
-      super("zlib", "1.2.11")
+      super("zlib", "1.3.1")
 
       @files << {
-        url: "http://zlib.net/fossils/zlib-1.2.11.tar.gz",
-        sha256: "c3e5e9fdd5004dcb542feda5ee4f0ff0744628baf8ed2dd5d66f8ca1197cb1a1",
+        url: "http://zlib.net/fossils/zlib-1.3.1.tar.gz",
+        sha256: "9a93b2b7dfdac77ceba5a558a580e74667dd6fede4585b91eefb60f03b72df23",
       }
 
       @target = ROOT.join(@target).to_s

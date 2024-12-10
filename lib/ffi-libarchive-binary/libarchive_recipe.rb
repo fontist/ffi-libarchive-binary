@@ -14,12 +14,12 @@ module LibarchiveBinary
     ROOT = Pathname.new(File.expand_path("../..", __dir__))
 
     def initialize
-      super("libarchive", "3.6.1")
+      super("libarchive", "3.7.4")
       @printed = {}
 
       @files << {
-        url: "https://www.libarchive.org/downloads/libarchive-3.6.1.tar.gz",
-        sha256: "c676146577d989189940f1959d9e3980d28513d74eedfbc6b7f15ea45fe54ee2",
+        url: "https://www.libarchive.org/downloads/libarchive-3.7.4.tar.gz",
+        sha256: "7875d49596286055b52439ed42f044bd8ad426aa4cc5aabd96bfe7abb971d5e8",
       }
 
       @target = ROOT.join(@target).to_s

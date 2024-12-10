@@ -8,7 +8,7 @@ module LibarchiveBinary
     "x86_64-apple-darwin" => "Mach-O 64-bit dynamically linked shared library x86_64",
     "aarch64-linux-gnu" => "ELF 64-bit LSB shared object, ARM aarch64",
     "x86_64-linux-gnu" => "ELF 64-bit LSB shared object, x86-64",
-    "x86_64-w64-mingw32" => "PE32+ executable (DLL) (console) x86-64, for MS Windows",
+    "x86_64-w64-mingw32" => "PE32+ executable",
   }.freeze
 
   ARCHS = {
