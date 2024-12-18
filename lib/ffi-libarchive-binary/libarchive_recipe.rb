@@ -14,12 +14,12 @@ module LibarchiveBinary
     ROOT = Pathname.new(File.expand_path("../..", __dir__))
 
     def initialize
-      super("libarchive", "3.7.4")
+      super("libarchive", "3.6.1")
       @printed = {}
 
       @files << {
-        url: "https://www.libarchive.org/downloads/libarchive-3.7.4.tar.gz",
-        sha256: "7875d49596286055b52439ed42f044bd8ad426aa4cc5aabd96bfe7abb971d5e8",
+        url: "https://www.libarchive.org/downloads/libarchive-3.6.1.tar.gz",
+        sha256: "c676146577d989189940f1959d9e3980d28513d74eedfbc6b7f15ea45fe54ee2",
       }
 
       @target = ROOT.join(@target).to_s
@@ -40,7 +40,7 @@ module LibarchiveBinary
 
     def default_flags
       [
-        "-DENABLE_OPENSSL:BOOL=ON", "-DENABLE_LIBB2:BOOL=OFF", "-DENABLE_LZ4:BOOL=OFF",
+        "-DENABLE_OPENSSL:BOOL=ON",   "-DENABLE_LIBB2:BOOL=OFF",      "-DENABLE_LZ4:BOOL=OFF",
         "-DENABLE_LZO::BOOL=OFF",     "-DENABLE_LZMA:BOOL=ON",        "-DENABLE_ZSTD:BOOL=OFF",
         "-DENABLE_ZLIB::BOOL=ON",     "-DENABLE_BZip2:BOOL=OFF",      "-DENABLE_LIBXML2:BOOL=OFF",
         "-DENABLE_EXPAT::BOOL=ON",    "-DENABLE_TAR:BOOL=OFF",        "-DENABLE_ICONV::BOOL=OFF",
