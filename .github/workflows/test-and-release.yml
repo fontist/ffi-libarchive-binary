@@ -37,10 +37,10 @@ jobs:
           - os: macos-latest
             platform: arm64-darwin
             ruby: '2.7'
-          - os: ubuntu-20.04
+          - os: ubuntu-latest
             platform: x86_64-linux
             ruby: '2.7'
-          - os: ubuntu-20.04
+          - os: ubuntu-latest
             platform: aarch64-linux
             ruby: '2.7'
           - os: ubuntu-latest
