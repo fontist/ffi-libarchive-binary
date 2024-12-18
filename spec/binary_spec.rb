@@ -24,6 +24,7 @@ RSpec.describe do
   def unarchive(archive, target)
     Dir.chdir(target) do
       flags = ::Archive::EXTRACT_PERM
+      puts "===> #{archive}"
       reader = ::Archive::Reader.open_filename(archive)
 
       reader.each_entry do |entry|
