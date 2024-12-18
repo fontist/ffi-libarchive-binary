@@ -17,11 +17,11 @@ module LibarchiveBinary
     ROOT = Pathname.new(File.expand_path("../..", __dir__))
 
     def initialize
-      super("openssl", "1.1.1w")
+      super("openssl", "1.1.1n")
 
       @files << {
-        url: "https://github.com/openssl/openssl/releases/download/OpenSSL_1_1_1w/openssl-1.1.1w.tar.gz",
-        sha256: "cf3098950cb4d853ad95c0841f1f9c6d3dc102dccfcacd521d93925208b76ac8",
+        url: "https://www.openssl.org/source/openssl-1.1.1n.tar.gz",
+        sha256: "40dceb51a4f6a5275bde0e6bf20ef4b91bfc32ed57c0552e2e8e15463372b17a",
       }
 
       @target = ROOT.join(@target).to_s

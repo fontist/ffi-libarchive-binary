@@ -12,14 +12,22 @@ require_relative "xz_recipe"
 module LibarchiveBinary
   class LibarchiveRecipe < MiniPortileCMake
     ROOT = Pathname.new(File.expand_path("../..", __dir__))
-
+    #
+    # libarchive 3.7.x uses new GLIBC packaging ( links to libc only and not to pthread, dl, ...)
+    # this does not link work on Ubuntu 20 with GLIBC 3.21
+    #
+    # Cannot build 3.7.x on Ubuntu 22 either because it creates a reference to GLIB 3.22 (min) that does
+    # not resolve on Ubuntu 20
+    #
+    # So without patching we are stick to 3.6.2 until Ubuntu 20 shall be supported
+    #
     def initialize
-      super("libarchive", "3.7.4")
+      super("libarchive", "3.6.2")
       @printed = {}
 
       @files << {
-        url: "https://www.libarchive.org/downloads/libarchive-3.7.4.tar.gz",
-        sha256: "7875d49596286055b52439ed42f044bd8ad426aa4cc5aabd96bfe7abb971d5e8",
+        url: "https://www.libarchive.org/downloads/libarchive-3.6.2.tar.gz",
+        sha256: "ba6d02f15ba04aba9c23fd5f236bb234eab9d5209e95d1c4df85c44d5f19b9b3",
       }
 
       @target = ROOT.join(@target).to_s
@@ -40,12 +48,12 @@ module LibarchiveBinary
 
     def default_flags
       [
-        "-DENABLE_OPENSSL:BOOL=ON", "-DENABLE_LIBB2:BOOL=OFF", "-DENABLE_LZ4:BOOL=OFF",
+        "-DENABLE_OPENSSL:BOOL=ON",   "-DENABLE_LIBB2:BOOL=OFF",      "-DENABLE_LZ4:BOOL=OFF",
         "-DENABLE_LZO::BOOL=OFF",     "-DENABLE_LZMA:BOOL=ON",        "-DENABLE_ZSTD:BOOL=OFF",
         "-DENABLE_ZLIB::BOOL=ON",     "-DENABLE_BZip2:BOOL=OFF",      "-DENABLE_LIBXML2:BOOL=OFF",
         "-DENABLE_EXPAT::BOOL=ON",    "-DENABLE_TAR:BOOL=OFF",        "-DENABLE_ICONV::BOOL=OFF",
         "-DENABLE_CPIO::BOOL=OFF",    "-DENABLE_CAT:BOOL=OFF",        "-DENABLE_ACL:BOOL=OFF",
-        "-DENABLE_TEST:BOOL=OFF",
+        "-DENABLE_TEST:BOOL=OFF",     "-DENABLE_UNZIP:BOOL=OFF",
         "-DCMAKE_INCLUDE_PATH=#{include_path}",
         "-DCMAKE_LIBRARY_PATH=#{library_path}"
       ]
