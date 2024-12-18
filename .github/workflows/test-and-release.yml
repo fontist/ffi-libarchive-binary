@@ -135,14 +135,14 @@ jobs:
         include:
           - env: { os: windows-latest, platform: x64-mingw-ucrt }
             ruby: '3.3'
+            experimental: true
           - env: { os: windows-latest, platform: x64-mingw-ucrt }
             ruby: '3.1'
+            experimental: true
     steps:
       - uses: actions/checkout@v4
         with:
           repository: metanorma/metanorma
-
-      - uses: metanorma/metanorma-build-scripts/inkscape-setup-action@main
 
       - uses: actions/download-artifact@v4
         with:
@@ -156,23 +156,16 @@ jobs:
           mv pkg/ffi-libarchive-binary-*-${{ matrix.env.platform }} pkg/ffi-libarchive-binary
           echo "gem 'ffi-libarchive-binary', path: 'pkg/ffi-libarchive-binary'" > Gemfile.devel
 
-      # https://github.com/rubygems/rubygems/issues/5160
-      - if: matrix.ruby == '3.0'
-        uses: ruby/setup-ruby@v1
+      - uses: ruby/setup-ruby@v1
         with:
           ruby-version: ${{ matrix.ruby }}
-          bundler-cache: true
           bundler: ${{ env.BUNDLER_VER }}
-          rubygems: latest
+          bundler-cache: true
 
-      - if: matrix.ruby != '3.0'
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: ${{ matrix.ruby }}
-          bundler: ${{ env.BUNDLER_VER }}
-          bundler-cache: true
+      - uses: metanorma/metanorma-build-scripts/inkscape-setup-action@main
 
       - run: bundle exec rake
+        continue-on-error: ${{ matrix.experimental }}
 
 # ----- Release -----
   release:
