@@ -1,7 +1,7 @@
 = Binaries for ffi-libarchive
 
 image:https://img.shields.io/gem/v/ffi-libarchive-binary.svg["Gem Version", link="https://rubygems.org/gems/ffi-libarchive-binary"]
-image:https://github.com/fontist/ffi-libarchive-binary/actions/workflows/rspec.yml/badge.svg["Build Status", link="https://github.com/fontist/ffi-libarchive-binary/actions/workflows/rspec.yml"]
+image:https://github.com/fontist/ffi-libarchive-binary/actions/workflows/test-and-release.yml/badge.svg["Build Status", link="https://github.com/fontist/ffi-libarchive-binary/actions/workflows/test-and-release.yml.yml"]
 
 == Purpose
 
