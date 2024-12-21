@@ -17,13 +17,9 @@ module LibarchiveBinary
     ROOT = Pathname.new(File.expand_path("../..", __dir__))
 
     def initialize
-      super("openssl", "1.1.1n")
+      super("openssl", MiniPortile::windows? ? "1.1.1w" : "3.3.2")
 
-      @files << {
-        url: "https://www.openssl.org/source/openssl-1.1.1n.tar.gz",
-        sha256: "40dceb51a4f6a5275bde0e6bf20ef4b91bfc32ed57c0552e2e8e15463372b17a",
-      }
-
+      @files << source_archive
       @target = ROOT.join(@target).to_s
     end
 
@@ -52,6 +48,16 @@ module LibarchiveBinary
       super
 
       FileUtils.touch(checkpoint)
+    end
+
+    def source_archive
+      if MiniPortile::windows?
+        { url: "https://github.com/openssl/openssl/releases/download/OpenSSL_1_1_1w/openssl-1.1.1w.tar.gz",
+          sha256: "cf3098950cb4d853ad95c0841f1f9c6d3dc102dccfcacd521d93925208b76ac8" }
+      else
+        { url: "https://github.com/openssl/openssl/releases/download/openssl-3.3.2/openssl-3.3.2.tar.gz",
+          sha256: "2e8a40b01979afe8be0bbfb3de5dc1c6709fedb46d6c89c10da114ab5fc3d281" }
+      end
     end
   end
 end
