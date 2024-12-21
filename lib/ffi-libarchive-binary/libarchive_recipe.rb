@@ -12,22 +12,13 @@ require_relative "xz_recipe"
 module LibarchiveBinary
   class LibarchiveRecipe < MiniPortileCMake
     ROOT = Pathname.new(File.expand_path("../..", __dir__))
-    #
-    # libarchive 3.7.x uses new GLIBC packaging ( links to libc only and not to pthread, dl, ...)
-    # this does not link work on Ubuntu 20 with GLIBC 3.21
-    #
-    # Cannot build 3.7.x on Ubuntu 22 either because it creates a reference to GLIB 3.22 (min) that does
-    # not resolve on Ubuntu 20
-    #
-    # So without patching we are stick to 3.6.2 until Ubuntu 20 shall be supported
-    #
     def initialize
-      super("libarchive", "3.6.2")
+      super("libarchive", "3.7.7")
       @printed = {}
 
       @files << {
-        url: "https://www.libarchive.org/downloads/libarchive-3.6.2.tar.gz",
-        sha256: "ba6d02f15ba04aba9c23fd5f236bb234eab9d5209e95d1c4df85c44d5f19b9b3",
+        url: "https://www.libarchive.org/downloads/libarchive-3.7.7.tar.gz",
+        sha256: "4cc540a3e9a1eebdefa1045d2e4184831100667e6d7d5b315bb1cbc951f8ddff",
       }
 
       @target = ROOT.join(@target).to_s
