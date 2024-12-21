@@ -135,16 +135,14 @@ jobs:
         include:
           - env: { os: windows-latest, platform: x64-mingw-ucrt }
             ruby: '3.3'
+            experimental: true
           - env: { os: windows-latest, platform: x64-mingw-ucrt }
             ruby: '3.1'
+            experimental: true
     steps:
       - uses: actions/checkout@v4
         with:
           repository: metanorma/metanorma
-
-      - uses: metanorma/ci/inkscape-setup-action@main
-
-      - uses: metanorma/ci/ghostscript-setup-action@main
 
       - uses: actions/download-artifact@v4
         with:
@@ -163,6 +161,8 @@ jobs:
           ruby-version: ${{ matrix.ruby }}
           bundler: ${{ env.BUNDLER_VER }}
           bundler-cache: true
+
+      - uses: metanorma/metanorma-build-scripts/inkscape-setup-action@main
 
       - run: bundle exec rake
         continue-on-error: ${{ matrix.experimental }}
