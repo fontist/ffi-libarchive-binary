@@ -3,6 +3,7 @@
 require "pathname"
 require "open3"
 
+require_relative "configuration"
 require_relative "base_recipe"
 require_relative "zlib_recipe"
 require_relative "libexpat_recipe"
@@ -12,13 +13,15 @@ require_relative "xz_recipe"
 module LibarchiveBinary
   class LibarchiveRecipe < MiniPortileCMake
     ROOT = Pathname.new(File.expand_path("../..", __dir__))
+    NAME = "libarchive"
     def initialize
-      super("libarchive", "3.7.7")
+      libarchive = LibarchiveBinary.library_for(NAME)
+      super(NAME, libarchive["version"])
       @printed = {}
 
       @files << {
-        url: "https://www.libarchive.org/downloads/libarchive-3.7.7.tar.gz",
-        sha256: "4cc540a3e9a1eebdefa1045d2e4184831100667e6d7d5b315bb1cbc951f8ddff",
+        url: libarchive["url"],
+        sha256: libarchive["sha256"],
       }
 
       @target = ROOT.join(@target).to_s
@@ -44,9 +47,9 @@ module LibarchiveBinary
         "-DENABLE_ZLIB::BOOL=ON",     "-DENABLE_BZip2:BOOL=OFF",      "-DENABLE_LIBXML2:BOOL=OFF",
         "-DENABLE_EXPAT::BOOL=ON",    "-DENABLE_TAR:BOOL=OFF",        "-DENABLE_ICONV::BOOL=OFF",
         "-DENABLE_CPIO::BOOL=OFF",    "-DENABLE_CAT:BOOL=OFF",        "-DENABLE_ACL:BOOL=OFF",
-        "-DENABLE_TEST:BOOL=OFF",     "-DENABLE_UNZIP:BOOL=OFF",
-        "-DCMAKE_INCLUDE_PATH=#{include_path}",
-        "-DCMAKE_LIBRARY_PATH=#{library_path}"
+        "-DENABLE_TEST:BOOL=OFF",     "-DENABLE_UNZIP:BOOL=OFF",      "-DOPENSSL_USE_STATIC_LIBS=ON",
+        "-DCMAKE_INCLUDE_PATH:STRING=#{include_path}",
+        "-DCMAKE_LIBRARY_PATH:STRING=#{library_path}"
       ]
     end
 
@@ -67,7 +70,7 @@ module LibarchiveBinary
 
     def library_path
       paths = [@zlib_recipe.path, @expat_recipe.path, @openssl_recipe.path, @xz_recipe.path]
-      paths.map { |k| "#{k}/lib" }.join(";")
+      paths.map { |k| "#{k}/lib;#{k}/lib64" }.join(";")
     end
 
     def activate
@@ -125,6 +128,27 @@ module LibarchiveBinary
     def lib_fullpath
       lib_filename = LIBNAMES[@host]
       @lib_fullpath ||= lib_filename.nil? ? nil : File.join(lib_workpath, lib_filename)
+    end
+
+    def libraries
+      configuration_file = File.join(File.dirname(__FILE__), "..", "..", "ext", "configuration.yml")
+      @libraries ||= ::YAML.load_file(configuration_file)["libraries"] || {}
+    rescue Psych::SyntaxError => e
+      puts "Warning: The configuration file '#{configuration_file}' contains invalid YAML syntax."
+      puts e.message
+      exit 1
+    rescue StandardError => e
+      puts "An unexpected error occurred while loading the configuration file '#{configuration_file}'."
+      puts e.message
+      exit 1
+    end
+
+    def library_for(libname)
+      libraries[libname][MiniPortile::windows? ? "windows" : "all"]
+    rescue StandardError => e
+      puts "Failed to load library configuration for '#{libname}'."
+      puts e.message
+      exit 1
     end
 
     def verify_lib

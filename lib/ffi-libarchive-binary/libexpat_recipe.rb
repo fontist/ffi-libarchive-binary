@@ -4,15 +4,8 @@ require_relative "base_recipe"
 
 module LibarchiveBinary
   class LibexpatRecipe < BaseRecipe
-    ROOT = Pathname.new(File.expand_path("../..", __dir__))
-
     def initialize
-      super("libexpat", "2.6.4")
-
-      @files << {
-        url: "https://github.com/libexpat/libexpat/releases/download/R_2_6_4/expat-2.6.4.tar.gz",
-        sha256: "fd03b7172b3bd7427a3e7a812063f74754f24542429b634e0db6511b53fb2278",
-      }
+      super("libexpat")
 
       @target = ROOT.join(@target).to_s
     end

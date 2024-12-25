@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "mini_portile2"
+require_relative "configuration"
 
 module LibarchiveBinary
   FORMATS = {
@@ -24,9 +25,18 @@ module LibarchiveBinary
     "arm64-apple-darwin" => "libarchive.dylib",
   }.freeze
 
+  ROOT = Pathname.new(File.expand_path("../..", __dir__))
+
   class BaseRecipe < MiniPortile
-    def initialize(name, version)
-      super
+    def initialize(name)
+      library = LibarchiveBinary.library_for(name)
+      version = library["version"]
+      super(name, version)
+      @target = ROOT.join(@target).to_s
+      @files << {
+        url: library["url"],
+        sha256: library["sha256"],
+      }
       @printed = {}
     end
 
