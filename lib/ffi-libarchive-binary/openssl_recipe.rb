@@ -11,7 +11,8 @@ module LibarchiveBinary
     "x86_64-linux-gnu" => nil,
     "x86_64-linux-musl" => nil,
     "x86_64-w64-mingw32" => "mingw64",
-    "aarch64-w64-mingw32" => "VC-CLANG-WIN64-CLANGASM-ARM",
+    # Future: Windows ARM64 support (commented out due to OpenSSL build system incompatibility)
+    # "aarch64-w64-mingw32" => "VC-CLANG-WIN64-CLANGASM-ARM",
   }.freeze
 
   ENV_CMD = ["env", "CFLAGS=-fPIC", "LDFLAGS=-fPIC"].freeze
