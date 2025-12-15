@@ -30,7 +30,6 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
   spec.extensions    = ["ext/extconf.rb"]
 
-  spec.add_runtime_dependency "bundler", "~> 2.3", ">= 2.3.22"
   spec.add_runtime_dependency "ffi", "~> 1.0"
   spec.add_runtime_dependency "ffi-libarchive", "~> 1.0"
   spec.add_runtime_dependency "mini_portile2", "~> 2.7"
