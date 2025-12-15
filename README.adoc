@@ -83,3 +83,92 @@ Here are a few technical guidelines to follow:
 This gem is distributed with a BSD 3-Clause license.
 
 This gem is developed, maintained and funded by https://www.ribose.com/[Ribose Inc.]
+
+=== Supported platforms
+
+The following platforms are officially tested and supported:
+
+[cols="1,1,1,1",options="header"]
+|===
+| Platform | Architecture | Ruby Versions | Status
+
+| Windows 2022 | x86_64 | 2.7, 3.0, 3.1, 3.2, 3.3, 3.4 | ✅ Supported
+| Windows 2025 | x86_64 | 2.7, 3.0, 3.1, 3.2, 3.3, 3.4 | ✅ Supported
+| Windows 11 ARM | ARM64 | 3.4 | ✅ Supported
+| macOS 15 | ARM64 (Apple Silicon) | 2.7, 3.0, 3.1, 3.2, 3.3, 3.4 | ✅ Supported
+| macOS 15 Large | x86_64 (Intel) | 2.7, 3.0, 3.1, 3.2, 3.3, 3.4 | ✅ Supported
+| macOS 26 | ARM64 (Apple Silicon) | 2.7, 3.0, 3.1, 3.2, 3.3, 3.4 | ✅ Supported
+| Ubuntu 24.04 | x86_64 (glibc) | 2.7, 3.0, 3.1, 3.2, 3.3, 3.4 | ✅ Supported
+| Ubuntu 22.04 | x86_64 (glibc) | 2.7, 3.0, 3.1, 3.2, 3.3, 3.4 | ✅ Supported
+| Alpine Linux | x86_64 (musl) | 2.7, 3.0, 3.1, 3.2, 3.3, 3.4 | ✅ Supported
+| Ubuntu 24.04 | ARM64 (glibc) | 2.7, 3.0, 3.1, 3.2, 3.3, 3.4 | ✅ Supported
+| Ubuntu 22.04 | ARM64 (glibc) | 2.7, 3.0, 3.1, 3.2, 3.3, 3.4 | ✅ Supported
+| Alpine Linux | ARM64 (musl) | 2.7, 3.0, 3.1, 3.2, 3.3, 3.4 | ✅ Supported
+|===
+
+NOTE: The gem provides pre-compiled binaries for 11 platforms. Separate binaries
+are provided for glibc-based (gnu) and musl-based Linux distributions to ensure
+compatibility. Windows ARM64 support is experimental and may have limitations
+due to OpenSSL build system constraints with MSYS2 CLANGARM64 environment.
+
+=== OpenSSL compiler target strategy
+
+The gem explicitly sets OpenSSL compiler targets to ensure correct assembly
+code generation:
+
+[cols="1,1,1",options="header"]
+|===
+| Platform | Compiler Target | Reason
+
+| Windows x64 | `mingw64` | Explicit x86_64 assembly selection
+| Windows ARM64 | `VC-CLANG-WIN64-CLANGASM-ARM` | Clang-based ARM64 for MSYS2 CLANGARM64
+| Linux x86_64 (gnu/musl) | Auto-detect | Native toolchain works correctly
+| Linux ARM64 (gnu/musl) | Auto-detect | Native toolchain works correctly
+| macOS ARM64 | Auto-detect | Native toolchain works correctly
+| macOS x64 | Auto-detect | Native toolchain works correctly
+|===
+
+NOTE: Windows platforms require explicit compiler targets because OpenSSL's
+auto-detection does not reliably select the correct target on Windows.
+Windows ARM64 uses the Clang/MSVC-based target `VC-CLANG-WIN64-CLANGASM-ARM`.
+Linux musl and glibc variants use the same OpenSSL configuration with
+auto-detection, as the toolchain correctly identifies the target.
+
+== Build requirements
+
+=== Windows
+
+==== Windows x64
+
+For building from source on Windows x64, you need:
+
+* Ruby 2.7 or higher with DevKit
+* MinGW-w64 x86_64 toolchain
+* MSYS2 (recommended) or equivalent Unix-like environment
+
+==== Windows ARM64
+
+For building from source on Windows ARM64, you need:
+
+* Ruby 3.4 or higher with DevKit (ARM64 build)
+* MinGW-w64 ARM64 toolchain (Clang-based)
+* MSYS2 CLANGARM64 environment
+
+.Installing MSYS2 CLANGARM64 environment
+[example]
+====
+[source,shell]
+----
+# Install MSYS2 from https://www.msys2.org/
+# Then in MSYS2 terminal:
+pacman -S mingw-w64-clang-aarch64-toolchain
+----
+
+This provides the Clang toolchain required for ARM64 builds.
+
+NOTE: Windows ARM64 support is experimental and may encounter build issues
+due to OpenSSL's build system expecting Windows-style paths while MSYS2
+uses Unix-style paths.
+====
+
+=== macOS

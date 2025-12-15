@@ -31,7 +31,11 @@ platforms = [
   ["x64-mingw-ucrt", "x86_64-w64-mingw32"],
   ["arm64-mingw-ucrt", "aarch64-w64-mingw32"],
   ["x86_64-linux", "x86_64-linux-gnu"],
+  ["x86_64-linux-gnu", "x86_64-linux-gnu"],
+  ["x86_64-linux-musl", "x86_64-linux-musl"],
   ["aarch64-linux", "aarch64-linux-gnu"],
+  ["aarch64-linux-gnu", "aarch64-linux-gnu"],
+  ["aarch64-linux-musl", "aarch64-linux-musl"],
   ["x86_64-darwin", "x86_64-apple-darwin"],
   ["arm64-darwin", "arm64-apple-darwin"],
 ]
