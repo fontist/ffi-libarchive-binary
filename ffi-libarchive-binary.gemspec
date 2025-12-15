@@ -20,9 +20,19 @@ Gem::Specification.new do |spec|
   spec.metadata["changelog_uri"] = "https://github.com/fontist/ffi-libarchive-binary"
 
   spec.files = Dir.chdir(File.expand_path(__dir__)) do
-    `git ls-files -z`.split("\x0").reject do |f|
-      f.match(%r{\A(?:test|spec|features|bin|.github)/})
-    end
+    Dir.glob([
+      "lib/**/*.rb",
+      "lib/**/*.{so,dylib,dll}",
+      "ext/**/*",
+      "toolchain/**/*",
+      "ffi-libarchive-binary.gemspec",
+      "Gemfile",
+      "Rakefile",
+      "README.adoc",
+      ".gitignore",
+      ".rspec",
+      ".rubocop.yml"
+    ], base: __dir__)
   end
 
   spec.bindir        = "exe"

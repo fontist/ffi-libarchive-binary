@@ -55,6 +55,24 @@ module LibarchiveBinary
       "LDFLAGS=-fPIC#{apple_arch_flag(host)}"
     end
 
+    def cross_compiler_env(host)
+      # For aarch64 cross-compilation, set the compiler
+      return {} unless host&.start_with?("aarch64-linux")
+
+      # Note: We use aarch64-linux-gnu-gcc for both glibc and musl targets because:
+      # 1. We build static libraries (.a files) which are libc-agnostic
+      # 2. The compiler generates aarch64 machine code (architecture-specific)
+      # 3. glibc vs musl only matters for dynamic linking at runtime
+      # 4. Our static libs link into libarchive.so which links to the target libc
+      {
+        "CC" => "aarch64-linux-gnu-gcc",
+        "CXX" => "aarch64-linux-gnu-g++",
+        "AR" => "aarch64-linux-gnu-ar",
+        "RANLIB" => "aarch64-linux-gnu-ranlib",
+        "STRIP" => "aarch64-linux-gnu-strip",
+      }
+    end
+
     def message(text)
       return super unless text.start_with?("\rDownloading")
 
