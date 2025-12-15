@@ -17,3 +17,4 @@ vendor/
 
 # remote file cache
 .rubocop-*
+CONTINUATION_PLAN.md

@@ -9,6 +9,7 @@ module LibarchiveBinary
     "aarch64-linux-gnu" => nil,
     "x86_64-linux-gnu" => nil,
     "x86_64-w64-mingw32" => "mingw64",
+    "aarch64-w64-mingw32" => "VC-CLANG-WIN64-CLANGASM-ARM",  # Clang toolchain for Windows ARM64
   }.freeze
 
   ENV_CMD = ["env", "CFLAGS=-fPIC", "LDFLAGS=-fPIC"].freeze
