@@ -20,11 +20,13 @@ env:
 
 jobs:
   pack:
+    name: pack (${{ matrix.os }}, ${{ matrix.platform }}, ${{ matrix.ruby }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         include:
+          # Windows platforms
           - os: windows-latest
             platform: x64-mingw32
             ruby: '3.4'
@@ -34,18 +36,34 @@ jobs:
           - os: windows-11-arm
             platform: arm64-mingw-ucrt
             ruby: '3.4'
+          # macOS platforms
           - os: macos-latest
             platform: x86_64-darwin
             ruby: '3.4'
           - os: macos-latest
             platform: arm64-darwin
             ruby: '3.4'
+          # Linux x86_64 platforms (gnu and musl)
           - os: ubuntu-latest
             platform: x86_64-linux
             ruby: '3.4'
           - os: ubuntu-latest
+            platform: x86_64-linux-gnu
+            ruby: '3.4'
+          - os: ubuntu-latest
+            platform: x86_64-linux-musl
+            ruby: '3.4'
+          # Linux aarch64 platforms (gnu and musl)
+          - os: ubuntu-latest
             platform: aarch64-linux
             ruby: '3.4'
+          - os: ubuntu-latest
+            platform: aarch64-linux-gnu
+            ruby: '3.4'
+          - os: ubuntu-latest
+            platform: aarch64-linux-musl
+            ruby: '3.4'
+          # Any platform (source gem)
           - os: ubuntu-latest
             platform: any
             ruby: '3.4'
@@ -58,7 +76,7 @@ jobs:
           bundler: ${{ env.BUNDLER_VER }}
           bundler-cache: true
 
-      - if: matrix.platform == 'aarch64-linux'
+      - if: matrix.platform == 'aarch64-linux' || matrix.platform == 'aarch64-linux-gnu' || matrix.platform == 'aarch64-linux-musl'
         name: Install aarch64 compilers
         run: |
           sudo apt-get update
@@ -73,7 +91,7 @@ jobs:
           name: build-logs-${{ matrix.platform }}
           path: tmp/*/ports/*/*/*.log
 
-      - if: matrix.platform != 'any' && matrix.platform != 'aarch64-linux'
+      - if: matrix.platform != 'any' && !startsWith(matrix.platform, 'aarch64-')
         uses: metanorma/metanorma-build-scripts/native-deps-action@main
         with:
           libname: archive
@@ -101,7 +119,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ruby: [ '2.7', '3.0', '3.1', '3.2', '3.3', '3.4' ]
+        ruby: [ '3.1', '3.2', '3.3', '3.4' ]
         os:
           - windows-2022
           - windows-2025
@@ -127,9 +145,9 @@ jobs:
           - os: windows-2025
             platform: x64-mingw32
           # Windows ARM64 platform
-          - os: windows-11-arm
-            platform: arm64-mingw-ucrt
-            ruby: '3.4'
+          # - os: windows-11-arm
+          #   platform: arm64-mingw-ucrt
+          #   ruby: '3.4'
           # macOS platforms
           - os: macos-15
             platform: arm64-darwin
