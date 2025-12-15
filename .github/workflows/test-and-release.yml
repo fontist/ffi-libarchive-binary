@@ -125,7 +125,7 @@ jobs:
           - windows-2022
           - windows-2025
           - macos-15
-          - macos-15-large
+          - macos-15-intel
           - macos-26
           - ubuntu-24.04
           - ubuntu-22.04
@@ -135,7 +135,7 @@ jobs:
             ruby: '2.7'
           - os: macos-15
             ruby: '2.7'
-          - os: macos-15-large
+          - os: macos-15-intel
             ruby: '2.7'
           - os: macos-26
             ruby: '2.7'
@@ -152,7 +152,7 @@ jobs:
           # macOS platforms
           - os: macos-15
             platform: arm64-darwin
-          - os: macos-15-large
+          - os: macos-15-intel
             platform: x86_64-darwin
           - os: macos-26
             platform: arm64-darwin
