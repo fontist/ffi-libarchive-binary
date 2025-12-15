@@ -29,7 +29,8 @@ end
 platforms = [
   ["x64-mingw32", "x86_64-w64-mingw32"],
   ["x64-mingw-ucrt", "x86_64-w64-mingw32"],
-  ["arm64-mingw-ucrt", "aarch64-w64-mingw32"],
+  # Future: Windows ARM64 support (commented out due to OpenSSL build system incompatibility)
+  # ["arm64-mingw-ucrt", "aarch64-w64-mingw32"],
   ["x86_64-linux", "x86_64-linux-gnu"],
   ["x86_64-linux-gnu", "x86_64-linux-gnu"],
   ["x86_64-linux-musl", "x86_64-linux-musl"],

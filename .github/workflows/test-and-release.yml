@@ -33,9 +33,10 @@ jobs:
           - os: windows-latest
             platform: x64-mingw-ucrt
             ruby: '3.4'
-          - os: windows-11-arm
-            platform: arm64-mingw-ucrt
-            ruby: '3.4'
+          # Future: Windows ARM64 support (commented out due to OpenSSL build system incompatibility)
+          # - os: windows-11-arm
+          #   platform: arm64-mingw-ucrt
+          #   ruby: '3.4'
           # macOS platforms
           - os: macos-latest
             platform: x86_64-darwin
