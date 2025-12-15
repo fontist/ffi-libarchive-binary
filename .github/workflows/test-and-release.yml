@@ -12,7 +12,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  BUNDLER_VER: 2.3.24
+  BUNDLER_VER: latest
 # Forcing bundler version to ensure that it is consistent everywhere and
 # does not cause bundler gem reinstalls
 # bundler/rubygems 2.3.22 is a minimal requirement to support gnu/musl differentiation
@@ -83,6 +83,14 @@ jobs:
           sudo apt-get update
           sudo apt-get install gcc-aarch64-linux-gnu g++-aarch64-linux-gnu binutils-aarch64-linux-gnu gperf
           echo "CMAKE_TOOLCHAIN_FILE=$(pwd)/toolchain/aarch64-linux-gnu.cmake" >> $GITHUB_ENV
+
+      - if: matrix.platform == 'aarch64-linux-musl'
+        name: Install musl cross-compiler for aarch64
+        run: |
+          # Install musl-tools for musl builds
+          sudo apt-get install musl-tools
+          # For aarch64-musl, we'll use musl-gcc wrapper with aarch64-linux-gnu-gcc
+          # This creates a musl-targeted build
 
       - run: bundle exec rake gem:native:${{ matrix.platform }}
 

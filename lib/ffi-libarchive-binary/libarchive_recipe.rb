@@ -45,9 +45,17 @@ module LibarchiveBinary
         "-DENABLE_OPENSSL:BOOL=ON",   "-DENABLE_LIBB2:BOOL=OFF",      "-DENABLE_LZ4:BOOL=OFF",
         "-DENABLE_LZO::BOOL=OFF",     "-DENABLE_LZMA:BOOL=ON",        "-DENABLE_ZSTD:BOOL=OFF",
         "-DENABLE_ZLIB::BOOL=ON",     "-DENABLE_BZip2:BOOL=OFF",      "-DENABLE_LIBXML2:BOOL=OFF",
-        "-DENABLE_EXPAT::BOOL=ON",    "-DENABLE_TAR:BOOL=OFF",        "-DENABLE_ICONV::BOOL=OFF",
-        "-DENABLE_CPIO::BOOL=OFF",    "-DENABLE_CAT:BOOL=OFF",        "-DENABLE_ACL:BOOL=OFF",
-        "-DENABLE_TEST:BOOL=OFF",     "-DENABLE_UNZIP:BOOL=OFF",      "-DOPENSSL_USE_STATIC_LIBS=ON",
+        "-DENABLE_EXPAT::BOOL=ON",    "-DENABLE_TAR:BOOL=OFF",        "-DENABLE_CPIO::BOOL=OFF",
+        "-DENABLE_CAT:BOOL=OFF",      "-DENABLE_ACL:BOOL=OFF",        "-DENABLE_TEST:BOOL=OFF",
+        "-DENABLE_UNZIP:BOOL=OFF",    "-DOPENSSL_USE_STATIC_LIBS=ON", "-DENABLE_XAR:BOOL=ON",
+
+        # Provide root directories - let CMake find libraries in lib or lib64
+        "-DOPENSSL_ROOT_DIR:PATH=#{@openssl_recipe.path}",
+
+        # Add include paths to C flags so CMake's header detection can find them
+        "-DCMAKE_C_FLAGS=-I#{@expat_recipe.path}/include -I#{@openssl_recipe.path}/include -I#{@xz_recipe.path}/include -I#{@zlib_recipe.path}/include",
+
+        # Provide search paths for CMake to find libraries
         "-DCMAKE_INCLUDE_PATH:STRING=#{include_path}",
         "-DCMAKE_LIBRARY_PATH:STRING=#{library_path}"
       ]
@@ -55,12 +63,11 @@ module LibarchiveBinary
 
     def configure_defaults
       df = generator_flags + default_flags
+
       ar = ARCHS[host]
-      if ar.nil?
-        df
-      else
-        df + ["-DCMAKE_OSX_ARCHITECTURES=#{ar}"]
-      end
+      df += ["-DCMAKE_OSX_ARCHITECTURES=#{ar}"] if ar
+
+      df
     end
 
     def include_path
@@ -98,6 +105,10 @@ module LibarchiveBinary
 
       @xz_recipe.host = @host if @host
       @xz_recipe.cook_if_not
+
+      # Set explicit LZMA environment variables for libarchive configure
+      ENV['LIBLZMA_CFLAGS'] = "-I#{@xz_recipe.path}/include"
+      ENV['LIBLZMA_LIBS'] = "-L#{@xz_recipe.path}/lib -llzma"
 
       super
 

@@ -1,0 +1,32 @@
+# Git
+.git
+.gitignore
+
+# Build artifacts
+tmp/
+ports/
+pkg/
+*.gem
+
+# Documentation
+*.md
+old-docs/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Ruby local files
+.bundle/
+vendor/bundle/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Test scripts (they're copied explicitly if needed)
+test-ubuntu24-arm64.sh
+check-libarchive-features.sh

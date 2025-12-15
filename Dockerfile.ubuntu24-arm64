@@ -1,0 +1,46 @@
+FROM ubuntu:24.04
+
+# Set platform for multi-arch builds
+ARG TARGETPLATFORM=linux/arm64
+
+# Prevent interactive prompts during package installation
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install system dependencies (cached layer)
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    curl \
+    git \
+    gcc-aarch64-linux-gnu \
+    g++-aarch64-linux-gnu \
+    binutils-aarch64-linux-gnu \
+    gperf \
+    cmake \
+    ruby \
+    ruby-dev \
+    file \
+    binutils \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set working directory
+WORKDIR /workspace
+
+# Install bundler (cached layer)
+RUN gem install bundler -v 2.3.24 --no-document
+
+# Copy dependency files first (for better caching)
+COPY Gemfile Gemfile.lock ffi-libarchive-binary.gemspec ./
+COPY lib/ffi-libarchive-binary/version.rb ./lib/ffi-libarchive-binary/
+
+# Install gems (cached layer unless Gemfile changes)
+RUN bundle install
+
+# Copy the rest of the project
+COPY . .
+
+# Set environment variable for cross-compilation
+ENV CMAKE_TOOLCHAIN_FILE=/workspace/toolchain/aarch64-linux-gnu.cmake
+ENV PLATFORM=aarch64-linux
+
+# Default command runs the test script
+CMD ["/bin/bash", "-c", "exec 2>&1; /workspace/docker-test-entrypoint.sh"]
