@@ -10,6 +10,7 @@ module LibarchiveBinary
     "aarch64-linux-gnu" => "ELF 64-bit LSB shared object, ARM aarch64",
     "x86_64-linux-gnu" => "ELF 64-bit LSB shared object, x86-64",
     "x86_64-w64-mingw32" => "PE32+ executable",
+    "aarch64-w64-mingw32" => "PE32+ executable",
   }.freeze
 
   ARCHS = {
@@ -19,6 +20,7 @@ module LibarchiveBinary
 
   LIBNAMES = {
     "x86_64-w64-mingw32" => "libarchive.dll",
+    "aarch64-w64-mingw32" => "libarchive.dll",
     "x86_64-linux-gnu" => "libarchive.so",
     "aarch64-linux-gnu" => "libarchive.so",
     "x86_64-apple-darwin" => "libarchive.dylib",
