@@ -1,0 +1,85 @@
+name: test
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: '${{ github.workflow }}-${{ github.job }}-${{ github.head_ref || github.ref_name }}'
+  cancel-in-progress: true
+
+env:
+  BUNDLER_VER: latest
+
+jobs:
+  build:
+    name: Build gems
+    uses: ./.github/workflows/gem-build.yml
+
+  test:
+    needs: build
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        ruby: [ '3.1', '3.2', '3.3', '3.4' ]
+        os:
+          - windows-2022
+          - windows-2025
+          - macos-15
+          - macos-15-intel
+          - macos-26
+          - ubuntu-24.04
+          - ubuntu-22.04
+        exclude:
+          # Ruby 2.7 is not available on newer Ubuntu/macOS
+          - os: ubuntu-24.04
+            ruby: '2.7'
+          - os: macos-15
+            ruby: '2.7'
+          - os: macos-15-intel
+            ruby: '2.7'
+          - os: macos-26
+            ruby: '2.7'
+        include:
+          # Windows platforms (x64-mingw32 for all Windows versions)
+          - os: windows-2022
+            platform: x64-mingw32
+          - os: windows-2025
+            platform: x64-mingw32
+          # macOS platforms
+          - os: macos-15
+            platform: arm64-darwin
+          - os: macos-15-intel
+            platform: x86_64-darwin
+          - os: macos-26
+            platform: arm64-darwin
+          # Ubuntu x86_64 platforms
+          - os: ubuntu-24.04
+            platform: x86_64-linux
+          - os: ubuntu-22.04
+            platform: x86_64-linux
+          # Ubuntu ARM64 platforms
+          - os: ubuntu-24.04-arm
+            platform: aarch64-linux
+            ruby: '3.4'
+          - os: ubuntu-22.04-arm
+            platform: aarch64-linux
+            ruby: '3.4'
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby }}
+          bundler: ${{ env.BUNDLER_VER }}
+          bundler-cache: true
+
+      - uses: actions/download-artifact@v7
+        with:
+          name: lib-${{ matrix.platform }}
+          path: lib/ffi-libarchive-binary
+
+      - run: bundle exec rspec
