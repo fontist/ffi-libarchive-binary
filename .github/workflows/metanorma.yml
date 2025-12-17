@@ -1,0 +1,105 @@
+name: metanorma
+
+on:
+  push:
+    branches: [ main ]
+    tags:     [ 'v*' ]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: '${{ github.workflow }}-${{ github.job }}-${{ github.head_ref || github.ref_name }}'
+  cancel-in-progress: true
+
+env:
+  BUNDLER_VER: latest
+
+jobs:
+  pack:
+    name: pack (${{ matrix.os }}, ${{ matrix.platform }}, ${{ matrix.ruby }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Minimal platforms needed for metanorma testing
+          - os: windows-latest
+            platform: x64-mingw-ucrt
+            ruby: '3.4'
+          - os: macos-latest
+            platform: arm64-darwin
+            ruby: '3.4'
+          - os: ubuntu-latest
+            platform: x86_64-linux
+            ruby: '3.4'
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby }}
+          bundler: ${{ env.BUNDLER_VER }}
+          bundler-cache: true
+
+      - run: bundle exec rake gem:native:${{ matrix.platform }}
+
+      - uses: actions/upload-artifact@v6
+        if: failure()
+        with:
+          name: build-logs-${{ matrix.platform }}
+          path: tmp/*/ports/*/*/*.log
+
+      - uses: metanorma/metanorma-build-scripts/native-deps-action@main
+        with:
+          libname: archive
+          directory: lib/ffi-libarchive-binary
+
+      - run: |
+          cd pkg/
+          gem unpack ffi-libarchive-binary-*.gem
+          ls */lib/ffi-libarchive-binary
+
+      - uses: actions/upload-artifact@v6
+        with:
+          name: ${{ matrix.platform }}-pkg
+          path: pkg/*.gem
+
+  metanorma:
+    needs: pack
+    runs-on: ${{ matrix.env.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        ruby: [ '3.2', '3.4' ]
+        env: 
+          - { os: macos-latest, platform: arm64-darwin }
+          - { os: ubuntu-latest, platform: x86_64-linux }
+          - { os: windows-latest, platform: x64-mingw-ucrt }
+        experimental: [true]
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          repository: metanorma/metanorma
+
+      - uses: actions/download-artifact@v7
+        with:
+          path: pkg
+          pattern: '*-pkg'
+          merge-multiple: true
+
+      - name: Setup ffi-libarchive-binary
+        run: |
+          gem unpack --target pkg pkg/ffi-libarchive-binary-*-${{ matrix.env.platform }}.gem
+          mv pkg/ffi-libarchive-binary-*-${{ matrix.env.platform }} pkg/ffi-libarchive-binary
+          echo "gem 'ffi-libarchive-binary', path: 'pkg/ffi-libarchive-binary'" > Gemfile.devel
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby }}
+          bundler: ${{ env.BUNDLER_VER }}
+          bundler-cache: true
+
+      - uses: metanorma/metanorma-build-scripts/inkscape-setup-action@main
+
+      - run: bundle exec rake
+        continue-on-error: ${{ matrix.experimental }}
