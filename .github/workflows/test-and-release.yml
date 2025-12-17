@@ -236,7 +236,7 @@ jobs:
 # ----- Release -----
   release:
     name: Release gem
-    needs: [ pack, test, metanorma ]
+    needs: [ pack, test ]
     runs-on: ubuntu-latest
     if: contains(github.ref, 'refs/tags/v')
     steps:
