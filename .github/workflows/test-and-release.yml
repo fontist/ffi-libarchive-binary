@@ -192,47 +192,6 @@ jobs:
 
       - run: bundle exec rspec
 
-  metanorma:
-    needs: pack
-    runs-on: ${{ matrix.env.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        ruby: [ '3.2', '3.3', '3.4' ]
-        env: [ { os: macos-latest, platform: arm64-darwin }, { os: ubuntu-latest, platform: x86_64-linux }  ]
-        experimental: [true]
-        include:
-          - env: { os: windows-latest, platform: x64-mingw-ucrt }
-            ruby: '3.3'
-            experimental: true
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          repository: metanorma/metanorma
-
-      - uses: actions/download-artifact@v7
-        with:
-          path: pkg
-          pattern: '*-pkg'
-          merge-multiple: true
-
-      - name: Setup ffi-libarchive-binary
-        run: |
-          gem unpack --target pkg pkg/ffi-libarchive-binary-*-${{ matrix.env.platform }}.gem
-          mv pkg/ffi-libarchive-binary-*-${{ matrix.env.platform }} pkg/ffi-libarchive-binary
-          echo "gem 'ffi-libarchive-binary', path: 'pkg/ffi-libarchive-binary'" > Gemfile.devel
-
-      - uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: ${{ matrix.ruby }}
-          bundler: ${{ env.BUNDLER_VER }}
-          bundler-cache: true
-
-      - uses: metanorma/metanorma-build-scripts/inkscape-setup-action@main
-
-      - run: bundle exec rake
-        continue-on-error: ${{ matrix.experimental }}
-
 # ----- Release -----
   release:
     name: Release gem
