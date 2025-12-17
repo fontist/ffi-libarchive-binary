@@ -1,4 +1,9 @@
 libraries:
+  # Windows ARM64 support is enabled via platform-specific configurations below:
+  # - OpenSSL uses version 3.3.2 for Windows ARM64 (required for ARM64 compatibility)
+  # - OpenSSL uses version 1.1.1w for Windows x64 (more stable for x86_64)
+  # - xz uses version 5.2.4 for all Windows platforms (MinGW compatibility)
+  # - Other libraries use cross-platform versions under 'all'
   zlib:
     all:
       version: "1.3.1"
