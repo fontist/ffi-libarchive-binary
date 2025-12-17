@@ -7,14 +7,14 @@ on:
         description: 'JSON array of platforms to build (e.g., ["x86_64-linux", "arm64-darwin"])'
         required: false
         type: string
-        default: '["x64-mingw32", "x64-mingw-ucrt", "x86_64-darwin", "arm64-darwin", "x86_64-linux", "x86_64-linux-gnu", "x86_64-linux-musl", "aarch64-linux", "aarch64-linux-gnu", "aarch64-linux-musl", "any"]'
+        default: ''
   workflow_dispatch:
     inputs:
       platforms:
         description: 'JSON array of platforms to build'
         required: false
         type: string
-        default: '["x64-mingw32", "x64-mingw-ucrt", "x86_64-darwin", "arm64-darwin", "x86_64-linux", "x86_64-linux-gnu", "x86_64-linux-musl", "aarch64-linux", "aarch64-linux-gnu", "aarch64-linux-musl", "any"]'
+        default: ''
 
 permissions:
   contents: read
@@ -24,51 +24,33 @@ env:
   BUNDLER_VER: latest
 
 jobs:
+  prepare:
+    name: Prepare platform matrix
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - id: set-matrix
+        run: |
+          if [[ -n "${{ inputs.platforms }}" ]]; then
+            # Use provided platforms input
+            PLATFORMS='${{ inputs.platforms }}'
+          else
+            # Read from platforms.json and extract platforms where build=true
+            PLATFORMS=$(jq -c '[.platforms | to_entries[] | .value[] | select(.build == true) | {platform: .platform, os: .os, ruby: .ruby}]' .github/platforms.json)
+          fi
+          echo "matrix=$PLATFORMS" >> $GITHUB_OUTPUT
+
   build:
     name: build (${{ matrix.os }}, ${{ matrix.platform }})
+    needs: prepare
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        include:
-          # Windows platforms
-          - os: windows-latest
-            platform: x64-mingw32
-            ruby: '3.4'
-          - os: windows-latest
-            platform: x64-mingw-ucrt
-            ruby: '3.4'
-          # macOS platforms
-          - os: macos-latest
-            platform: x86_64-darwin
-            ruby: '3.4'
-          - os: macos-latest
-            platform: arm64-darwin
-            ruby: '3.4'
-          # Linux x86_64 platforms (gnu and musl)
-          - os: ubuntu-latest
-            platform: x86_64-linux
-            ruby: '3.4'
-          - os: ubuntu-latest
-            platform: x86_64-linux-gnu
-            ruby: '3.4'
-          - os: ubuntu-latest
-            platform: x86_64-linux-musl
-            ruby: '3.4'
-          # Linux aarch64 platforms (gnu and musl)
-          - os: ubuntu-latest
-            platform: aarch64-linux
-            ruby: '3.4'
-          - os: ubuntu-latest
-            platform: aarch64-linux-gnu
-            ruby: '3.4'
-          - os: ubuntu-latest
-            platform: aarch64-linux-musl
-            ruby: '3.4'
-          # Any platform (source gem)
-          - os: ubuntu-latest
-            platform: any
-            ruby: '3.4'
+        include: ${{ fromJSON(needs.prepare.outputs.matrix) }}
     steps:
       - uses: actions/checkout@v6
 

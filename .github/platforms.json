@@ -1,0 +1,147 @@
+{
+  "comment": "Centralized platform configuration for gem builds and tests",
+  "version": "1.0.0",
+  "platforms": {
+    "windows": [
+      {
+        "platform": "x64-mingw32",
+        "os": "windows-latest",
+        "ruby": "3.4",
+        "description": "Windows x64 (MinGW)",
+        "build": true,
+        "test": true,
+        "test_os": ["windows-2022", "windows-2025"]
+      },
+      {
+        "platform": "x64-mingw-ucrt",
+        "os": "windows-latest",
+        "ruby": "3.4",
+        "description": "Windows x64 UCRT (MinGW)",
+        "build": true,
+        "test": true,
+        "test_os": ["windows-2022", "windows-2025"]
+      },
+      {
+        "platform": "arm64-mingw-ucrt",
+        "os": "windows-11-arm",
+        "ruby": "3.4",
+        "description": "Windows ARM64 UCRT",
+        "build": true,
+        "test": true,
+        "test_os": ["windows-11-arm"],
+        "test_ruby_versions": ["3.4"],
+        "notes": "Windows 11 ARM only supports Ruby 3.4+"
+      }
+    ],
+    "macos": [
+      {
+        "platform": "x86_64-darwin",
+        "os": "macos-latest",
+        "ruby": "3.4",
+        "description": "macOS Intel (x86_64)",
+        "build": true,
+        "test": true,
+        "test_os": ["macos-15-intel"]
+      },
+      {
+        "platform": "arm64-darwin",
+        "os": "macos-latest",
+        "ruby": "3.4",
+        "description": "macOS Apple Silicon (ARM64)",
+        "build": true,
+        "test": true,
+        "test_os": ["macos-15", "macos-26"]
+      }
+    ],
+    "linux_x86_64": [
+      {
+        "platform": "x86_64-linux",
+        "os": "ubuntu-latest",
+        "ruby": "3.4",
+        "description": "Linux x86_64 (generic)",
+        "build": true,
+        "test": true,
+        "test_os": ["ubuntu-24.04", "ubuntu-22.04"]
+      },
+      {
+        "platform": "x86_64-linux-gnu",
+        "os": "ubuntu-latest",
+        "ruby": "3.4",
+        "description": "Linux x86_64 GNU libc",
+        "build": true,
+        "test": false
+      },
+      {
+        "platform": "x86_64-linux-musl",
+        "os": "ubuntu-latest",
+        "ruby": "3.4",
+        "description": "Linux x86_64 musl libc",
+        "build": true,
+        "test": false
+      }
+    ],
+    "linux_aarch64": [
+      {
+        "platform": "aarch64-linux",
+        "os": "ubuntu-latest",
+        "ruby": "3.4",
+        "description": "Linux ARM64 (generic)",
+        "build": true,
+        "test": true,
+        "test_os": ["ubuntu-24.04-arm", "ubuntu-22.04-arm"],
+        "cross_compile": true
+      },
+      {
+        "platform": "aarch64-linux-gnu",
+        "os": "ubuntu-latest",
+        "ruby": "3.4",
+        "description": "Linux ARM64 GNU libc",
+        "build": true,
+        "test": false,
+        "cross_compile": true
+      },
+      {
+        "platform": "aarch64-linux-musl",
+        "os": "ubuntu-latest",
+        "ruby": "3.4",
+        "description": "Linux ARM64 musl libc",
+        "build": true,
+        "test": false,
+        "cross_compile": true
+      }
+    ],
+    "source": [
+      {
+        "platform": "any",
+        "os": "ubuntu-latest",
+        "ruby": "3.4",
+        "description": "Source gem (platform-independent)",
+        "build": true,
+        "test": false
+      }
+    ]
+  },
+  "build_platforms": [
+    "x64-mingw32",
+    "x64-mingw-ucrt",
+    "arm64-mingw-ucrt",
+    "x86_64-darwin",
+    "arm64-darwin",
+    "x86_64-linux",
+    "x86_64-linux-gnu",
+    "x86_64-linux-musl",
+    "aarch64-linux",
+    "aarch64-linux-gnu",
+    "aarch64-linux-musl",
+    "any"
+  ],
+  "test_platforms": [
+    "x64-mingw32",
+    "x64-mingw-ucrt",
+    "arm64-mingw-ucrt",
+    "x86_64-darwin",
+    "arm64-darwin",
+    "x86_64-linux",
+    "aarch64-linux"
+  ]
+}

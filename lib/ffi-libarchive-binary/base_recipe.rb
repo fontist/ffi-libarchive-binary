@@ -57,20 +57,37 @@ module LibarchiveBinary
 
     def cross_compiler_env(host)
       # For aarch64 cross-compilation, set the compiler
-      return {} unless host&.start_with?("aarch64-linux")
+      return {} unless host&.start_with?("aarch64")
 
-      # Note: We use aarch64-linux-gnu-gcc for both glibc and musl targets because:
-      # 1. We build static libraries (.a files) which are libc-agnostic
-      # 2. The compiler generates aarch64 machine code (architecture-specific)
-      # 3. glibc vs musl only matters for dynamic linking at runtime
-      # 4. Our static libs link into libarchive.so which links to the target libc
-      {
-        "CC" => "aarch64-linux-gnu-gcc",
-        "CXX" => "aarch64-linux-gnu-g++",
-        "AR" => "aarch64-linux-gnu-ar",
-        "RANLIB" => "aarch64-linux-gnu-ranlib",
-        "STRIP" => "aarch64-linux-gnu-strip",
-      }
+      if host == "aarch64-linux-gnu" || host == "aarch64-linux-musl"
+        # Note: We use aarch64-linux-gnu-gcc for both glibc and musl targets because:
+        # 1. We build static libraries (.a files) which are libc-agnostic
+        # 2. The compiler generates aarch64 machine code (architecture-specific)
+        # 3. glibc vs musl only matters for dynamic linking at runtime
+        # 4. Our static libs link into libarchive.so which links to the target libc
+        {
+          "CC" => "aarch64-linux-gnu-gcc",
+          "CXX" => "aarch64-linux-gnu-g++",
+          "AR" => "aarch64-linux-gnu-ar",
+          "RANLIB" => "aarch64-linux-gnu-ranlib",
+          "STRIP" => "aarch64-linux-gnu-strip",
+        }
+      elsif host == "aarch64-w64-mingw32"
+        # For Windows ARM64 cross-compilation, use regular clang with explicit target
+        # Not clang-cl because configure scripts don't recognize it as a C99 compiler
+        {
+          "CC" => "clang -target aarch64-w64-mingw32",
+          "CXX" => "clang++ -target aarch64-w64-mingw32",
+          "AR" => "ar",
+          "RANLIB" => "ranlib",
+          "NM" => "nm",
+          # Put all windres flags in RC to prevent OpenSSL from appending --target=pe-x86-64
+          # OpenSSL's mingw64 target adds --target=pe-x86-64 which must be the LAST flag
+          "RC" => "windres",
+        }
+      else
+        {}
+      end
     end
 
     def message(text)

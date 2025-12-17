@@ -4,6 +4,17 @@ on:
   push:
     tags: [ 'v*' ]
   workflow_dispatch:
+    inputs:
+      next_version:
+        description: |
+          Next release version. Possible values:
+          - x.y.z (specific version)
+          - major (bump major version)
+          - minor (bump minor version)
+          - patch (bump patch version)
+          - skip (publish current version without bumping)
+        required: true
+        default: 'skip'
 
 permissions:
   contents: write
@@ -15,8 +26,42 @@ env:
   BUNDLER_VER: latest
 
 jobs:
+  bump-version:
+    name: Bump version
+    runs-on: ubuntu-latest
+    # Only run version bump if triggered manually and not using 'skip'
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.next_version != 'skip'
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.4'
+          bundler: ${{ env.BUNDLER_VER }}
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Install gem-release
+        run: gem install gem-release
+
+      - name: Bump version and tag
+        run: gem bump --version ${{ github.event.inputs.next_version }} --tag --push
+
   build:
     name: Build gems for release
+    needs: [bump-version]
+    # Run if bump-version succeeded, was skipped, or if triggered by tag push
+    if: |
+      always() &&
+      !failure() &&
+      !cancelled() &&
+      (needs.bump-version.result == 'success' || needs.bump-version.result == 'skipped' || github.event_name == 'push')
     uses: ./.github/workflows/gem-build.yml
 
   release:
