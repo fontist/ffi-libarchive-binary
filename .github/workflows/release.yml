@@ -1,0 +1,42 @@
+name: release
+
+on:
+  push:
+    tags: [ 'v*' ]
+  workflow_dispatch:
+
+env:
+  BUNDLER_VER: latest
+
+jobs:
+  build:
+    name: Build gems for release
+    uses: ./.github/workflows/gem-build.yml
+
+  release:
+    name: Release to RubyGems
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/download-artifact@v7
+        with:
+          path: pkg
+          pattern: '*-pkg'
+          merge-multiple: true
+
+      - name: Publish to rubygems.org
+        env:
+          RUBYGEMS_API_KEY: ${{secrets.FONTIST_CI_RUBYGEMS_API_KEY}}
+        run: |
+          mkdir -p ~/.gem
+          touch ~/.gem/credentials
+          cat > ~/.gem/credentials << EOF
+          ---
+          :rubygems_api_key: ${RUBYGEMS_API_KEY}
+          EOF
+          chmod 0600 ~/.gem/credentials
+          gem signin
+          mkdir tmp
+          for gem in pkg/*.gem; do gem push -V $gem; done
