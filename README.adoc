@@ -59,6 +59,117 @@ All new code should follow these
 rules. If you make changes in a pre-existing file that violates these rules you
 should fix the violations as part of your contribution.
 
+== Releasing
+
+The gem uses an automated release workflow that handles version bumping and
+publishing to RubyGems using the `gem-release` gem.
+
+=== Release workflow
+
+The release process is managed through GitHub Actions workflow dispatch:
+
+. Navigate to the Actions tab in the GitHub repository
+. Select the "release" workflow
+. Click "Run workflow"
+. Choose the version bump type:
+  - `x.y.z` - Set a specific version (e.g., `1.2.3`)
+  - `major` - Bump major version (e.g., `0.4.2` → `1.0.0`)
+  - `minor` - Bump minor version (e.g., `0.4.2` → `0.5.0`)
+  - `patch` - Bump patch version (e.g., `0.4.2` → `0.4.3`)
+  - `skip` - Publish current version without bumping (useful for republishing)
+
+The workflow will:
+
+. Install the `gem-release` gem
+. Bump the version in [`lib/ffi-libarchive-binary/version.rb`](lib/ffi-libarchive-binary/version.rb:4) (if not skip)
+. Create a git commit with the version change
+. Create a git tag (`vX.Y.Z`)
+. Push changes to the repository
+. Build platform-specific gems for all supported platforms
+. Publish all gems to RubyGems
+
+NOTE: The workflow uses the `gem-release` gem which provides a reliable and
+well-tested version bumping mechanism used across many Ruby projects.
+
+=== Manual release
+
+For manual releases, you can use the `gem-release` gem directly:
+
+[source,shell]
+----
+# Install gem-release if not already installed
+gem install gem-release
+
+# Bump patch version (0.4.2 -> 0.4.3) and create tag
+gem bump --version patch --tag --push
+
+# Bump minor version (0.4.2 -> 0.5.0) and create tag
+gem bump --version minor --tag --push
+
+# Bump major version (0.4.2 -> 1.0.0) and create tag
+gem bump --version major --tag --push
+
+# Set specific version and create tag
+gem bump --version 1.2.3 --tag --push
+----
+
+Once the tag is pushed, the release workflow will automatically trigger and build
+the gems for all platforms.
+
+== Platform configuration
+
+The gem uses centralized platform configuration in [`.github/platforms.json`](.github/platforms.json:1)
+as the single source of truth for all platform-specific settings.
+
+=== Platform metadata
+
+Each platform entry includes:
+
+* `platform` - Platform identifier for gem naming (e.g., `x86_64-linux`)
+* `os` - GitHub Actions runner to use for building
+* `ruby` - Ruby version to use
+* `description` - Human-readable description
+* `build` - Whether to build a gem for this platform
+* `test` - Whether to test this platform
+* `test_os` - Array of OS runners to test on (if applicable)
+* `cross_compile` - Whether this requires cross-compilation
+* `notes` - Additional information
+
+=== Listing platforms
+
+Use the provided script to list all configured platforms:
+
+[source,shell]
+----
+# List all platforms
+bin/list-platforms
+
+# List only build platforms
+bin/list-platforms --build
+
+# List only test platforms
+bin/list-platforms --test
+----
+
+=== Adding or removing platforms
+
+To add or modify platform support:
+
+. Edit [`.github/platforms.json`](.github/platforms.json:1)
+. Update the platform entry with appropriate settings
+. Set `"build": true` to enable building for that platform
+. Set `"test": true` to enable testing for that platform
+. Update the platform arrays (`build_platforms` and `test_platforms`) at the bottom of the file
+
+NOTE: When adding a new platform, ensure the GitHub Actions runner is available
+and the build toolchain is properly configured.
+
+=== Windows ARM64 support
+
+Windows ARM64 (`arm64-mingw-ucrt`) builds pre-compiled gems for Windows on ARM64
+devices (e.g., Surface Pro X, Windows 11 ARM). This platform uses the GitHub
+Actions `windows-11-arm` runner.
+
 == Contributing
 
 First, thank you for contributing! We love pull requests from everyone. By
@@ -92,23 +203,23 @@ The following platforms are officially tested and supported:
 |===
 | Platform | Architecture | Ruby Versions | Status
 
-| Windows 2022 | x86_64 | 2.7, 3.0, 3.1, 3.2, 3.3, 3.4 | ✅ Supported
-| Windows 2025 | x86_64 | 2.7, 3.0, 3.1, 3.2, 3.3, 3.4 | ✅ Supported
-| macOS 15 | ARM64 (Apple Silicon) | 2.7, 3.0, 3.1, 3.2, 3.3, 3.4 | ✅ Supported
-| macOS 15 Large | x86_64 (Intel) | 2.7, 3.0, 3.1, 3.2, 3.3, 3.4 | ✅ Supported
-| macOS 26 | ARM64 (Apple Silicon) | 2.7, 3.0, 3.1, 3.2, 3.3, 3.4 | ✅ Supported
-| Ubuntu 24.04 | x86_64 (glibc) | 2.7, 3.0, 3.1, 3.2, 3.3, 3.4 | ✅ Supported
-| Ubuntu 22.04 | x86_64 (glibc) | 2.7, 3.0, 3.1, 3.2, 3.3, 3.4 | ✅ Supported
-| Alpine Linux | x86_64 (musl) | 2.7, 3.0, 3.1, 3.2, 3.3, 3.4 | ✅ Supported
-| Ubuntu 24.04 | ARM64 (glibc) | 2.7, 3.0, 3.1, 3.2, 3.3, 3.4 | ✅ Supported
-| Ubuntu 22.04 | ARM64 (glibc) | 2.7, 3.0, 3.1, 3.2, 3.3, 3.4 | ✅ Supported
-| Alpine Linux | ARM64 (musl) | 2.7, 3.0, 3.1, 3.2, 3.3, 3.4 | ✅ Supported
+| Windows 2022 | x86_64 | 3.1+ | ✅ Supported
+| Windows 2025 | x86_64 | 3.1+ | ✅ Supported
+| Windows 11 ARM | ARM64 | 3.4+ | ✅ Supported
+| macOS 15 | ARM64 (Apple Silicon) | 3.1+ | ✅ Supported
+| macOS 15 Large | x86_64 (Intel) | 3.1+ | ✅ Supported
+| macOS 26 | ARM64 (Apple Silicon) | 3.1+ | ✅ Supported
+| Ubuntu 24.04 | x86_64 (glibc) | 3.1+ | ✅ Supported
+| Ubuntu 22.04 | x86_64 (glibc) | 3.1+ | ✅ Supported
+| Alpine Linux | x86_64 (musl) | 3.1+ | ✅ Supported
+| Ubuntu 24.04 | ARM64 (glibc) | 3.1+ | ✅ Supported
+| Ubuntu 22.04 | ARM64 (glibc) | 3.1+ | ✅ Supported
+| Alpine Linux | ARM64 (musl) | 3.1+ | ✅ Supported
 |===
 
-NOTE: The gem provides pre-compiled binaries for 10 platforms. Separate binaries
+NOTE: The gem provides pre-compiled binaries for 11 platforms. Separate binaries
 are provided for glibc-based (gnu) and musl-based Linux distributions to ensure
-compatibility. Windows ARM64 support is planned for future releases pending
-resolution of OpenSSL build system compatibility issues with MSYS2 CLANGARM64.
+compatibility.
 
 === OpenSSL compiler target strategy
 
@@ -142,5 +253,3 @@ For building from source on Windows x64, you need:
 * Ruby 2.7 or higher with DevKit
 * MinGW-w64 x86_64 toolchain
 * MSYS2 (recommended) or equivalent Unix-like environment
-
-=== macOS
