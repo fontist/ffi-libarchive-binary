@@ -16,6 +16,10 @@ on:
         type: string
         default: '["x64-mingw32", "x64-mingw-ucrt", "x86_64-darwin", "arm64-darwin", "x86_64-linux", "x86_64-linux-gnu", "x86_64-linux-musl", "aarch64-linux", "aarch64-linux-gnu", "aarch64-linux-musl", "any"]'
 
+permissions:
+  contents: read
+  packages: write
+
 env:
   BUNDLER_VER: latest
 
@@ -94,7 +98,7 @@ jobs:
       - uses: actions/upload-artifact@v6
         if: failure()
         with:
-          name: build-logs-${{ matrix.platform }}
+          name: build-logs-${{ github.run_number }}-${{ matrix.platform }}
           path: tmp/*/ports/*/*/*.log
 
       - if: matrix.platform != 'any' && !startsWith(matrix.platform, 'aarch64-')
@@ -110,11 +114,11 @@ jobs:
 
       - uses: actions/upload-artifact@v6
         with:
-          name: ${{ matrix.platform }}-pkg
+          name: ${{ github.run_number }}-${{ matrix.platform }}-pkg
           path: pkg/*.gem
 
       - if: matrix.platform != 'any'
         uses: actions/upload-artifact@v6
         with:
-          name: lib-${{ matrix.platform }}
+          name: lib-${{ github.run_number }}-${{ matrix.platform }}
           path: lib/ffi-libarchive-binary/libarchive.*

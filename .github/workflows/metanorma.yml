@@ -11,6 +11,9 @@ concurrency:
   group: '${{ github.workflow }}-${{ github.job }}-${{ github.head_ref || github.ref_name }}'
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 env:
   BUNDLER_VER: latest
 
@@ -39,7 +42,7 @@ jobs:
       - uses: actions/download-artifact@v7
         with:
           path: pkg
-          pattern: '*-pkg'
+          pattern: '${{ github.run_number }}-*-pkg'
           merge-multiple: true
 
       - name: Setup ffi-libarchive-binary
