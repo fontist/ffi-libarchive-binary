@@ -13,6 +13,10 @@ concurrency:
 env:
   BUNDLER_VER: latest
 
+permissions:
+  contents: read
+  packages: write
+
 jobs:
   build:
     name: Build gems
@@ -79,7 +83,7 @@ jobs:
 
       - uses: actions/download-artifact@v7
         with:
-          name: lib-${{ matrix.platform }}
+          name: lib-${{ github.run_number }}-${{ matrix.platform }}
           path: lib/ffi-libarchive-binary
 
       - run: bundle exec rspec

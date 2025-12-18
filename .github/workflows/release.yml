@@ -5,6 +5,11 @@ on:
     tags: [ 'v*' ]
   workflow_dispatch:
 
+permissions:
+  contents: write
+  packages: write
+
+
 env:
   BUNDLER_VER: latest
 
@@ -23,7 +28,7 @@ jobs:
       - uses: actions/download-artifact@v7
         with:
           path: pkg
-          pattern: '*-pkg'
+          pattern: '${{ github.run_number }}-*-pkg'
           merge-multiple: true
 
       - name: Publish to rubygems.org
