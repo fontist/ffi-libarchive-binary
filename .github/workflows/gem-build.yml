@@ -83,7 +83,7 @@ jobs:
           name: build-logs-${{ github.run_number }}-${{ matrix.platform }}
           path: tmp/*/ports/*/*/*.log
 
-      - if: matrix.platform != 'any' && !startsWith(matrix.platform, 'aarch64-')
+      - if: matrix.platform != 'any' && !startsWith(matrix.platform, 'aarch64-') && matrix.platform != 'arm64-mingw-ucrt'
         uses: metanorma/metanorma-build-scripts/native-deps-action@main
         with:
           libname: archive
