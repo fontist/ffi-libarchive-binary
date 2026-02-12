@@ -83,6 +83,14 @@ jobs:
           name: build-logs-${{ github.run_number }}-${{ matrix.platform }}
           path: tmp/*/ports/*/*/*.log
 
+      - name: List native dependencies
+        if: matrix.platform != 'any'
+        continue-on-error: true
+        uses: metanorma/metanorma-build-scripts/native-deps-action@main
+        with:
+          libname: archive
+          directory: lib/ffi-libarchive-binary
+
       - run: |
           cd pkg/
           gem unpack ffi-libarchive-binary-*.gem
