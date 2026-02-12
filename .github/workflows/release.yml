@@ -65,7 +65,7 @@ jobs:
     uses: ./.github/workflows/gem-build.yml
 
   release:
-    name: Release to RubyGems
+    name: Release to RubyGems and GitHub
     needs: build
     runs-on: ubuntu-latest
     steps:
@@ -76,6 +76,22 @@ jobs:
           path: pkg
           pattern: '${{ github.run_number }}-*-pkg'
           merge-multiple: true
+
+      - name: Get version
+        id: version
+        run: |
+          VERSION=$(ls pkg/*.gem | head -1 | sed 's/.*ffi-libarchive-binary-\(.*\)-.*/\1/')
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          name: Release v${{ steps.version.outputs.version }}
+          generate_release_notes: true
+          files: pkg/*.gem
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Publish to rubygems.org
         env:
