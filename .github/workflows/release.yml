@@ -80,7 +80,7 @@ jobs:
       - name: Get version
         id: version
         run: |
-          VERSION=$(ls pkg/*.gem | head -1 | sed 's/.*ffi-libarchive-binary-\(.*\)-.*/\1/')
+          VERSION=$(grep "VERSION =" lib/ffi-libarchive-binary/version.rb | sed 's/.*"\(.*\)".*/\1/')
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Create GitHub Release
