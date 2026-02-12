@@ -29,7 +29,7 @@
         "build": true,
         "test": true,
         "test_os": ["windows-11-arm"],
-        "test_ruby_versions": ["3.4"],
+        "test_ruby_versions": ["3.4", "4.0"],
         "notes": "Windows 11 ARM only supports Ruby 3.4+"
       }
     ],
