@@ -54,6 +54,17 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      - name: Cache built dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ports
+            tmp
+            lib/ffi-libarchive-binary/libarchive.*
+          key: deps-${{ matrix.platform }}-${{ hashFiles('ext/configuration.yml', 'lib/ffi-libarchive-binary/*_recipe.rb', 'lib/ffi-libarchive-binary/base_recipe.rb') }}
+          restore-keys: |
+            deps-${{ matrix.platform }}-
+
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: ${{ matrix.ruby }}
