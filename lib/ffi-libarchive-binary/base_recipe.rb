@@ -8,7 +8,9 @@ module LibarchiveBinary
     "arm64-apple-darwin" => "Mach-O 64-bit dynamically linked shared library arm64",
     "x86_64-apple-darwin" => "Mach-O 64-bit dynamically linked shared library x86_64",
     "aarch64-linux-gnu" => "ELF 64-bit LSB shared object, ARM aarch64",
+    "aarch64-linux-musl" => "ELF 64-bit LSB shared object, ARM aarch64",
     "x86_64-linux-gnu" => "ELF 64-bit LSB shared object, x86-64",
+    "x86_64-linux-musl" => "ELF 64-bit LSB shared object, x86-64",
     "x86_64-w64-mingw32" => "PE32+ executable",
     "aarch64-w64-mingw32" => "PE32+ executable",
   }.freeze
@@ -23,6 +25,8 @@ module LibarchiveBinary
     "aarch64-w64-mingw32" => "libarchive.dll",
     "x86_64-linux-gnu" => "libarchive.so",
     "aarch64-linux-gnu" => "libarchive.so",
+    "x86_64-linux-musl" => "libarchive.so",
+    "aarch64-linux-musl" => "libarchive.so",
     "x86_64-apple-darwin" => "libarchive.dylib",
     "arm64-apple-darwin" => "libarchive.dylib",
   }.freeze
@@ -59,7 +63,8 @@ module LibarchiveBinary
       # For aarch64 cross-compilation, set the compiler
       return {} unless host&.start_with?("aarch64")
 
-      if host == "aarch64-linux-gnu" || host == "aarch64-linux-musl"
+      case host
+      when "aarch64-linux-gnu", "aarch64-linux-musl"
         # Note: We use aarch64-linux-gnu-gcc for both glibc and musl targets because:
         # 1. We build static libraries (.a files) which are libc-agnostic
         # 2. The compiler generates aarch64 machine code (architecture-specific)
@@ -72,7 +77,7 @@ module LibarchiveBinary
           "RANLIB" => "aarch64-linux-gnu-ranlib",
           "STRIP" => "aarch64-linux-gnu-strip",
         }
-      elsif host == "aarch64-w64-mingw32"
+      when "aarch64-w64-mingw32"
         # For Windows ARM64 cross-compilation, use regular clang with explicit target
         # Not clang-cl because configure scripts don't recognize it as a C99 compiler
         {
