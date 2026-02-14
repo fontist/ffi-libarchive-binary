@@ -87,6 +87,8 @@ jobs:
     name: Release to RubyGems and GitHub
     needs: build
     runs-on: ubuntu-latest
+    # Run even if some builds failed (partial release)
+    if: always() && !cancelled() && needs.build.result != 'skipped'
     steps:
       - uses: actions/checkout@v6
         with:
@@ -131,4 +133,6 @@ jobs:
           chmod 0600 ~/.gem/credentials
           gem signin
           mkdir tmp
-          for gem in pkg/*.gem; do gem push -V $gem; done
+          for gem in pkg/*.gem; do
+            gem push -V "$gem" || echo "Warning: Failed to push $gem"
+          done
