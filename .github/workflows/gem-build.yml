@@ -88,6 +88,28 @@ jobs:
 
       - run: bundle exec rake gem:native:${{ matrix.platform }}
 
+      # Display compiled libraries for debugging
+      - name: Inspect built libraries
+        if: matrix.platform != 'any'
+        shell: bash
+        run: |
+          echo "=== Platform: ${{ matrix.platform }} ==="
+          echo "=== Compiled libraries ==="
+          ls lib/ffi-libarchive-binary/*.dll lib/ffi-libarchive-binary/*.so lib/ffi-libarchive-binary/*.dylib 2>/dev/null || echo "No compiled libraries found"
+          echo "=== Library directory contents ==="
+          ls -la lib/ffi-libarchive-binary/ 2>/dev/null || echo "Directory not found"
+
+      # Unpack gem and display contents
+      - name: Inspect gem contents
+        shell: bash
+        run: |
+          cd pkg/
+          gem unpack ffi-libarchive-binary-*.gem
+          echo "=== Files in gem ==="
+          ls -R */lib/ 2>/dev/null | head -50
+          echo "=== Compiled libraries in gem ==="
+          ls */lib/ffi-libarchive-binary/*.dll */lib/ffi-libarchive-binary/*.so */lib/ffi-libarchive-binary/*.dylib 2>/dev/null || echo "No compiled libraries found in gem"
+
       - uses: actions/upload-artifact@v6
         if: failure()
         with:
