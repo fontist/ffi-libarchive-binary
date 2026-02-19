@@ -122,8 +122,7 @@ module LibarchiveBinary
     def install
       super
 
-      libs = Dir.glob(File.join(port_path, "{lib,bin}", "*"))
-        .grep(/\/(?:lib)?[a-zA-Z0-9\-]+\.(?:so|dylib|dll)$/)
+      libs = Dir.glob(File.join(port_path, "{lib,bin}", "*.{so,dylib,dll,DLL}"))
       FileUtils.cp_r(libs, lib_workpath, verbose: true)
       if lib_fullpath.nil?
         message("Cannot guess libarchive library name, skipping format verification")
