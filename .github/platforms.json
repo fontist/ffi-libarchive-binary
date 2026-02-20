@@ -56,7 +56,7 @@
     "linux_x86_64": [
       {
         "platform": "x86_64-linux",
-        "os": "ubuntu-latest",
+        "os": "ubuntu-22.04",
         "ruby": "3.4",
         "description": "Linux x86_64 (generic)",
         "build": true,
@@ -65,7 +65,7 @@
       },
       {
         "platform": "x86_64-linux-gnu",
-        "os": "ubuntu-latest",
+        "os": "ubuntu-22.04",
         "ruby": "3.4",
         "description": "Linux x86_64 GNU libc",
         "build": true,
@@ -83,7 +83,7 @@
     "linux_aarch64": [
       {
         "platform": "aarch64-linux",
-        "os": "ubuntu-latest",
+        "os": "ubuntu-22.04",
         "ruby": "3.4",
         "description": "Linux ARM64 (generic)",
         "build": true,
@@ -93,7 +93,7 @@
       },
       {
         "platform": "aarch64-linux-gnu",
-        "os": "ubuntu-latest",
+        "os": "ubuntu-22.04",
         "ruby": "3.4",
         "description": "Linux ARM64 GNU libc",
         "build": true,
