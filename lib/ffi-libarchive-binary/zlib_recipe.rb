@@ -36,7 +36,7 @@ module LibarchiveBinary
         # Set cross-compiler environment variables for aarch64
         env_vars = cross_compiler_env(host)
         cmd = ["env"] + env_vars.map { |k, v| "#{k}=#{v}" } +
-              [cflags(host), ldflags(host), "./configure"] + computed_options
+          [cflags(host), ldflags(host), "./configure"] + computed_options
         execute("configure", cmd)
       end
     end

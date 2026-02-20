@@ -77,7 +77,7 @@ jobs:
           name: ${{ github.run_number }}-${{ matrix.platform }}-pkg
           path: pkg
 
-      # Unpack gem and display compiled libraries for debugging
+      # Unpack gem and display compiled libraries for debugging - MUST FAIL if none found
       - name: Inspect gem contents
         shell: bash
         run: |
@@ -85,9 +85,21 @@ jobs:
           gem unpack ffi-libarchive-binary-*.gem
           echo "=== Platform: ${{ matrix.platform }} ==="
           echo "=== Compiled libraries in gem ==="
-          ls */lib/ffi-libarchive-binary/*.dll */lib/ffi-libarchive-binary/*.so */lib/ffi-libarchive-binary/*.dylib 2>/dev/null || echo "No compiled libraries found in gem"
+          FOUND=0
+          for ext in dll so dylib; do
+            for f in $(find . -name "*.$ext" 2>/dev/null); do
+              echo "$f"
+              FOUND=1
+            done
+          done
+          if [ "$FOUND" -eq 0 ]; then
+            echo "ERROR: No compiled libraries found in gem!"
+            echo "=== Full lib directory contents ==="
+            ls -la */lib/ffi-libarchive-binary/ 2>/dev/null || echo "Directory not found"
+            exit 1
+          fi
           echo "=== Full lib directory contents ==="
-          ls -la */lib/ffi-libarchive-binary/ 2>/dev/null || echo "Directory not found"
+          ls -la */lib/ffi-libarchive-binary/
 
       # Install the native gem
       - name: Install native gem

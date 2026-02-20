@@ -20,7 +20,7 @@ module LibarchiveBinary
   def self.library_for(libname)
     if MiniPortile::windows?
       # Detect Windows ARM64
-      if RUBY_PLATFORM =~ /aarch64|arm64/i
+      if RUBY_PLATFORM.match?(/aarch64|arm64/i)
         libraries[libname]["windows-arm64"] || libraries[libname]["windows"] || libraries[libname]["all"]
       else
         libraries[libname]["windows-x64"] || libraries[libname]["windows"] || libraries[libname]["all"]

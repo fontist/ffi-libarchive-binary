@@ -88,18 +88,32 @@ jobs:
 
       - run: bundle exec rake gem:native:${{ matrix.platform }}
 
-      # Display compiled libraries for debugging
+      # Display compiled libraries for debugging - MUST FAIL if none found
       - name: Inspect built libraries
         if: matrix.platform != 'any'
         shell: bash
         run: |
           echo "=== Platform: ${{ matrix.platform }} ==="
           echo "=== Compiled libraries ==="
-          ls lib/ffi-libarchive-binary/*.dll lib/ffi-libarchive-binary/*.so lib/ffi-libarchive-binary/*.dylib 2>/dev/null || echo "No compiled libraries found"
+          FOUND=0
+          for ext in dll so dylib; do
+            for f in lib/ffi-libarchive-binary/*.$ext; do
+              if [ -f "$f" ]; then
+                echo "$f"
+                FOUND=1
+              fi
+            done
+          done
+          if [ "$FOUND" -eq 0 ]; then
+            echo "ERROR: No compiled libraries found!"
+            echo "=== Library directory contents ==="
+            ls -la lib/ffi-libarchive-binary/ 2>/dev/null || echo "Directory not found"
+            exit 1
+          fi
           echo "=== Library directory contents ==="
-          ls -la lib/ffi-libarchive-binary/ 2>/dev/null || echo "Directory not found"
+          ls -la lib/ffi-libarchive-binary/
 
-      # Unpack gem and display contents
+      # Unpack gem and verify it contains compiled libraries - MUST FAIL if none found
       - name: Inspect gem contents
         shell: bash
         run: |
@@ -108,7 +122,17 @@ jobs:
           echo "=== Files in gem ==="
           ls -R */lib/ 2>/dev/null | head -50
           echo "=== Compiled libraries in gem ==="
-          ls */lib/ffi-libarchive-binary/*.dll */lib/ffi-libarchive-binary/*.so */lib/ffi-libarchive-binary/*.dylib 2>/dev/null || echo "No compiled libraries found in gem"
+          FOUND=0
+          for ext in dll so dylib; do
+            for f in $(find . -name "*.$ext" 2>/dev/null); do
+              echo "$f"
+              FOUND=1
+            done
+          done
+          if [ "$FOUND" -eq 0 ] && [ "${{ matrix.platform }}" != "any" ]; then
+            echo "ERROR: No compiled libraries found in gem!"
+            exit 1
+          fi
 
       - uses: actions/upload-artifact@v6
         if: failure()
