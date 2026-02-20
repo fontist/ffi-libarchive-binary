@@ -45,9 +45,10 @@ module LibarchiveBinary
         "-DENABLE_OPENSSL:BOOL=ON",   "-DENABLE_LIBB2:BOOL=OFF",      "-DENABLE_LZ4:BOOL=OFF",
         "-DENABLE_LZO::BOOL=OFF",     "-DENABLE_LZMA:BOOL=ON",        "-DENABLE_ZSTD:BOOL=OFF",
         "-DENABLE_ZLIB::BOOL=ON",     "-DENABLE_BZip2:BOOL=OFF",      "-DENABLE_LIBXML2:BOOL=OFF",
-        "-DENABLE_EXPAT::BOOL=ON",    "-DENABLE_TAR:BOOL=OFF",        "-DENABLE_CPIO::BOOL=OFF",
-        "-DENABLE_CAT:BOOL=OFF",      "-DENABLE_ACL:BOOL=OFF",        "-DENABLE_TEST:BOOL=OFF",
-        "-DENABLE_UNZIP:BOOL=OFF",    "-DOPENSSL_USE_STATIC_LIBS=ON", "-DENABLE_XAR:BOOL=ON",
+        "-DENABLE_EXPAT::BOOL=ON",    "-DENABLE_TAR:BOOL=OFF",        "-DENABLE_ICONV:BOOL=OFF",
+        "-DENABLE_CPIO::BOOL=OFF",    "-DENABLE_CAT:BOOL=OFF",        "-DENABLE_ACL:BOOL=OFF",
+        "-DENABLE_TEST:BOOL=OFF",     "-DENABLE_UNZIP:BOOL=OFF",      "-DOPENSSL_USE_STATIC_LIBS=ON",
+        "-DENABLE_XAR:BOOL=ON",
 
         # Provide root directories - let CMake find libraries in lib or lib64
         "-DOPENSSL_ROOT_DIR:PATH=#{@openssl_recipe.path}",
