@@ -3,17 +3,19 @@
 require_relative "base_recipe"
 
 module LibarchiveBinary
-  class XZRecipe < BaseRecipe
+  class LibiconvRecipe < BaseRecipe
     def initialize
-      super("xz")
+      super("libiconv")
+
+      @target = ROOT.join(@target).to_s
     end
 
     def configure_defaults
       [
         "--host=#{@host}",
-        "--disable-doc",      "--disable-xz",       "--with-pic",
-        "--disable-xzdec",    "--disable-lzmadec",  "--disable-lzmainfo",
-        "--disable-scripts",  "--disable-shared",   "--enable-static"
+        "--disable-shared",
+        "--enable-static",
+        "--disable-nls",
       ]
     end
 

@@ -28,7 +28,7 @@ module LibarchiveBinary
         "--without-http",
         "--without-ftp",
         "--enable-static",
-        "--disable-shared"
+        "--disable-shared",
       ]
     end
 

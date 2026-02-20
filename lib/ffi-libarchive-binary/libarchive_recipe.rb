@@ -7,6 +7,7 @@ require_relative "configuration"
 require_relative "base_recipe"
 require_relative "zlib_recipe"
 require_relative "libexpat_recipe"
+require_relative "libiconv_recipe"
 require_relative "openssl_recipe"
 require_relative "xz_recipe"
 
@@ -32,6 +33,7 @@ module LibarchiveBinary
     def create_dependencies
       @zlib_recipe = ZLibRecipe.new
       @expat_recipe = LibexpatRecipe.new
+      @iconv_recipe = LibiconvRecipe.new
       @openssl_recipe = OpensslRecipe.new
       @xz_recipe = XZRecipe.new
     end
@@ -42,10 +44,10 @@ module LibarchiveBinary
 
     def default_flags
       [
-        "-DENABLE_OPENSSL:BOOL=ON",   "-DENABLE_LIBB2:BOOL=OFF",      "-DENABLE_LZ4:BOOL=OFF",
-        "-DENABLE_LZO::BOOL=OFF",     "-DENABLE_LZMA:BOOL=ON",        "-DENABLE_ZSTD:BOOL=OFF",
-        "-DENABLE_ZLIB::BOOL=ON",     "-DENABLE_BZip2:BOOL=OFF",      "-DENABLE_LIBXML2:BOOL=OFF",
-        "-DENABLE_EXPAT::BOOL=ON",    "-DENABLE_TAR:BOOL=OFF",        "-DENABLE_CPIO::BOOL=OFF",
+        "-DENABLE_OPENSSL:BOOL=ON", "-DENABLE_LIBB2:BOOL=OFF", "-DENABLE_LZ4:BOOL=OFF",
+        "-DENABLE_LZO:BOOL=OFF",     "-DENABLE_LZMA:BOOL=ON",        "-DENABLE_ZSTD:BOOL=OFF",
+        "-DENABLE_ZLIB:BOOL=ON",     "-DENABLE_BZip2:BOOL=OFF",      "-DENABLE_LIBXML2:BOOL=OFF",
+        "-DENABLE_EXPAT:BOOL=ON",    "-DENABLE_TAR:BOOL=OFF",        "-DENABLE_CPIO:BOOL=OFF",
         "-DENABLE_CAT:BOOL=OFF",      "-DENABLE_ACL:BOOL=OFF",        "-DENABLE_TEST:BOOL=OFF",
         "-DENABLE_UNZIP:BOOL=OFF",    "-DOPENSSL_USE_STATIC_LIBS=ON", "-DENABLE_XAR:BOOL=ON",
 
@@ -53,7 +55,11 @@ module LibarchiveBinary
         "-DOPENSSL_ROOT_DIR:PATH=#{@openssl_recipe.path}",
 
         # Add include paths to C flags so CMake's header detection can find them
-        "-DCMAKE_C_FLAGS=-I#{@expat_recipe.path}/include -I#{@openssl_recipe.path}/include -I#{@xz_recipe.path}/include -I#{@zlib_recipe.path}/include",
+        "-DCMAKE_C_FLAGS=-I#{@expat_recipe.path}/include " \
+        "-I#{@iconv_recipe.path}/include " \
+        "-I#{@openssl_recipe.path}/include " \
+        "-I#{@xz_recipe.path}/include " \
+        "-I#{@zlib_recipe.path}/include",
 
         # Provide search paths for CMake to find libraries
         "-DCMAKE_INCLUDE_PATH:STRING=#{include_path}",
@@ -71,18 +77,19 @@ module LibarchiveBinary
     end
 
     def include_path
-      paths = [@zlib_recipe.path, @expat_recipe.path, @openssl_recipe.path, @xz_recipe.path]
+      paths = [@zlib_recipe.path, @expat_recipe.path, @iconv_recipe.path, @openssl_recipe.path, @xz_recipe.path]
       paths.map { |k| "#{k}/include" }.join(";")
     end
 
     def library_path
-      paths = [@zlib_recipe.path, @expat_recipe.path, @openssl_recipe.path, @xz_recipe.path]
+      paths = [@zlib_recipe.path, @expat_recipe.path, @iconv_recipe.path, @openssl_recipe.path, @xz_recipe.path]
       paths.map { |k| "#{k}/lib;#{k}/lib64" }.join(";")
     end
 
     def activate
       @zlib_recipe.activate
       @expat_recipe.activate
+      @iconv_recipe.activate
       @openssl_recipe.activate
       @xz_recipe.activate
 
@@ -100,6 +107,9 @@ module LibarchiveBinary
       @expat_recipe.host = @host if @host
       @expat_recipe.cook_if_not
 
+      @iconv_recipe.host = @host if @host
+      @iconv_recipe.cook_if_not
+
       @openssl_recipe.host = @host if @host
       @openssl_recipe.cook_if_not
 
@@ -107,8 +117,8 @@ module LibarchiveBinary
       @xz_recipe.cook_if_not
 
       # Set explicit LZMA environment variables for libarchive configure
-      ENV['LIBLZMA_CFLAGS'] = "-I#{@xz_recipe.path}/include"
-      ENV['LIBLZMA_LIBS'] = "-L#{@xz_recipe.path}/lib -llzma"
+      ENV["LIBLZMA_CFLAGS"] = "-I#{@xz_recipe.path}/include"
+      ENV["LIBLZMA_LIBS"] = "-L#{@xz_recipe.path}/lib -llzma"
 
       super
 
